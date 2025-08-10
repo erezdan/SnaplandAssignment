@@ -1,0 +1,6 @@
+@Snapland.Server_HostAddress = http://localhost:5232
+
+GET {{Snapland.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
