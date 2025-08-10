@@ -8,7 +8,25 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="8.0.14" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="9.0.8">
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      <PrivateAssets>all</PrivateAssets>
+    </PackageReference>
+    <PackageReference Include="NetTopologySuite" Version="2.6.0" />
+    <PackageReference Include="Npgsql" Version="9.0.3" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="9.0.4" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL.NetTopologySuite" Version="9.0.4" />
     <PackageReference Include="Swashbuckle.AspNetCore" Version="6.6.2" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Api\Endpoints\" />
+    <Folder Include="Api\DTOs\" />
+    <Folder Include="Domain\Entities\" />
+    <Folder Include="Infrastructure\Migrations\" />
+    <Folder Include="Common\" />
+    <Folder Include="Config\" />
+    <Folder Include="Realtime\Websockets\" />
   </ItemGroup>
 
 </Project>
