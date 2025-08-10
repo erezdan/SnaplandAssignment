@@ -1,0 +1,33 @@
+# Dotnet
+bin/
+obj/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+*.local.json
+
+# VS / Rider
+.vs/
+.idea/
+*.DotSettings.user
+
+# Logs
+*.log
+logs/
+
+# Node/React
+node_modules/
+dist/
+.build/
+.cache/
+*.tsbuildinfo
+
+# Env
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+Thumbs.db
