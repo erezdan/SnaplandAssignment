@@ -1,11 +1,11 @@
 // services/base-api.js
 
 import axios from 'axios';
-import AuthService from './auth-service';
+import AuthService from '../services/auth-service';
 
 // Create Axios instance with base URL
 const api = axios.create({
-  baseURL: import.meta.env.API_BASE,
+  baseURL: process.env.REACT_APP_API_BASE,
   headers: {
     'Content-Type': 'application/json',
   },
