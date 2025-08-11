@@ -1,21 +1,25 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using Snapland.Server.Api.DTOs;
+using Snapland.Server.Api.Extensions.Snapland.Server.Api.Extensions;
 using Snapland.Server.Infrastructure.Persistence;
 
 namespace Snapland.Server.Api.Controllers;
 
+[Authorize]
 [ApiController]
-[Route("api/areas/{areaId:guid}/versions")]
+[Route("api/areas")]
 public class AreaVersionsController : ControllerBase
 {
     private readonly AppDbContext _db;
     public AreaVersionsController(AppDbContext db) => _db = db;
 
-    [HttpPost]
+    [HttpPost("{areaId:guid}/versions")]
     public async Task<IActionResult> CreateVersion([FromRoute] Guid areaId, [FromBody] AreaVersionCreateDto dto)
     {
+        var userId = User.GetUserId();
         var area = await _db.Areas.FirstOrDefaultAsync(a => a.Id == areaId && !a.IsDeleted);
         if (area == null) return NotFound("Area not found");
 
@@ -39,7 +43,7 @@ public class AreaVersionsController : ControllerBase
             VersionNumber = nextVersion,
             Name = dto.Name,
             Geometry = polygon,
-            EditedByUserId = dto.EditedByUserId
+            EditedByUserId = userId
         };
 
         _db.AreaVersions.Add(version);
@@ -55,9 +59,19 @@ public class AreaVersionsController : ControllerBase
         });
     }
 
-    [HttpGet]
+    [HttpGet("{areaId}/versions")]
     public async Task<IActionResult> GetVersions([FromRoute] Guid areaId)
     {
+        var userId = User.GetUserId();
+
+        // Ensure the area exists and belongs to the authenticated user
+        var area = await _db.Areas
+            .FirstOrDefaultAsync(a => a.Id == areaId && a.CreatedByUserId == userId);
+
+        if (area == null)
+            return NotFound("Area not found or access denied.");
+
+        // Retrieve all versions for the area
         var versions = await _db.AreaVersions
             .Where(v => v.AreaId == areaId)
             .OrderBy(v => v.VersionNumber)

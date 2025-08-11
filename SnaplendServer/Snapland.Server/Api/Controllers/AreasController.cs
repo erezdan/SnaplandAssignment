@@ -6,9 +6,12 @@ using Snapland.Server.Api.DTOs;
 using Snapland.Server.Domain.Entities;
 using Snapland.Server.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
+using Microsoft.AspNetCore.Authorization;
+using Snapland.Server.Api.Extensions.Snapland.Server.Api.Extensions;
 
 namespace Snapland.Server.Api.Controllers
 {
+    [Authorize]
     [ApiController]
     [Route("api/[controller]")]
     public class AreasController : ControllerBase
@@ -29,6 +32,7 @@ namespace Snapland.Server.Api.Controllers
             if (string.IsNullOrWhiteSpace(dto.Name) || dto.Coordinates is null || dto.Coordinates.Length < 4)
                 return BadRequest("Invalid polygon");
 
+            var userId = User.GetUserId();
             var gf = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
             var shell = dto.Coordinates.Select(c => new Coordinate(c[0], c[1])).ToArray();
 
@@ -42,7 +46,7 @@ namespace Snapland.Server.Api.Controllers
             {
                 Name = dto.Name,
                 Geometry = polygon,
-                CreatedByUserId = dto.UserId
+                CreatedByUserId = userId
             };
 
             _db.Areas.Add(area);
@@ -53,7 +57,7 @@ namespace Snapland.Server.Api.Controllers
                 VersionNumber = 1,
                 Name = area.Name,
                 Geometry = polygon,
-                EditedByUserId = dto.UserId
+                EditedByUserId = userId
             };
 
             _db.AreaVersions.Add(version);
@@ -92,8 +96,9 @@ namespace Snapland.Server.Api.Controllers
                 new Coordinate(minLng, minLat) // close polygon
             });
 
+            var userId = User.GetUserId();
             var results = await _db.Areas
-                .Where(a => !a.IsDeleted && a.Geometry.Intersects(envelope))
+                .Where(a => a.CreatedByUserId == userId && !a.IsDeleted && a.Geometry.Intersects(envelope))
                 .Select(a => new AreaResultDto
                 {
                     Id = a.Id,
@@ -109,7 +114,8 @@ namespace Snapland.Server.Api.Controllers
         [HttpGet("{id:long}")]
         public async Task<ActionResult<AreaDto>> GetById(Guid id)
         {
-            var area = await _db.Areas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            var userId = User.GetUserId();
+            var area = await _db.Areas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && x.CreatedByUserId == userId);
             if (area is null) return NotFound();
             return Ok(area.ToDto());
         }
@@ -117,7 +123,8 @@ namespace Snapland.Server.Api.Controllers
         [HttpDelete("{id:long}")]
         public async Task<IActionResult> SoftDelete(Guid id)
         {
-            var area = await _db.Areas.FirstOrDefaultAsync(x => x.Id == id);
+            var userId = User.GetUserId();
+            var area = await _db.Areas.FirstOrDefaultAsync(x => x.Id == id && x.CreatedByUserId == userId);
             if (area is null) return NotFound();
 
             area.IsDeleted = true;
