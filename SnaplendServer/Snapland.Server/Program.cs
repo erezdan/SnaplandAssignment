@@ -5,6 +5,7 @@ using NetTopologySuite;
 using Snapland.Server.Api.Services;
 using Snapland.Server.Infrastructure.Persistence;
 using System.Text;
+using Microsoft.OpenApi.Models;
 
 // Load .env variables (manual step)
 DotNetEnv.Env.Load();
@@ -24,8 +25,43 @@ builder.Services.AddCors(o =>
         .AllowAnyHeader()
         .AllowAnyMethod()
         .SetPreflightMaxAge(TimeSpan.FromHours(1))
-    // .AllowCredentials() // uncomment if using cookies or SignalR with credentials
     );
+});
+
+builder.Services.AddEndpointsApiExplorer();
+builder.Services.AddSwaggerGen(opt =>
+{
+    opt.SwaggerDoc("v1", new() { Title = "Snapland API", Version = "v1" });
+
+    // Add JWT support
+    opt.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+    {
+        In = ParameterLocation.Header,
+        Description = "Please enter a valid token",
+        Name = "Authorization",
+        Type = SecuritySchemeType.Http,
+        BearerFormat = "JWT",
+        Scheme = "bearer"
+    });
+
+    opt.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
+        {
+            new OpenApiSecurityScheme
+            {
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "Bearer"
+                }
+            },
+            new string[] {}
+        }
+    });
+
+    // ? Load XML comments for Swagger
+    var xmlFilename = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    opt.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
 });
 
 // Register GeometryFactory with SRID 4326

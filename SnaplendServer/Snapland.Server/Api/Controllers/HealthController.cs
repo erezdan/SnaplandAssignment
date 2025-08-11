@@ -18,6 +18,13 @@ namespace Snapland.Server.Api.Controllers
             _config = config;
         }
 
+        /// <summary>
+        /// Returns the health status of the server.
+        /// </summary>
+        /// <remarks>
+        /// Can be used for uptime checks, monitoring, or load balancer probes.
+        /// Does not require authentication.
+        /// </remarks>
         [HttpGet]
         public async Task<IActionResult> GetHealth()
         {

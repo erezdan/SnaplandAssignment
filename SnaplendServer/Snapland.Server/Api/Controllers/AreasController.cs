@@ -24,8 +24,17 @@ namespace Snapland.Server.Api.Controllers
         }
 
         /// <summary>
-        /// Create a new area with initial version.
+        /// Creates a new area with its initial version.
         /// </summary>
+        /// <remarks>
+        /// Requires JWT authentication.
+        /// The request body must contain a name and a valid polygon defined by coordinates.
+        /// The polygon must have at least 3 points and be closed (first and last point identical).
+        /// </remarks>
+        /// <param name="dto">The data required to create the area, including name and coordinates.</param>
+        /// <returns>
+        /// Returns 201 Created with the new area's details if successful, or 400 Bad Request if validation fails.
+        /// </returns>
         [HttpPost]
         public async Task<IActionResult> CreateArea([FromBody] AreaCreateDto dto)
         {
@@ -78,8 +87,19 @@ namespace Snapland.Server.Api.Controllers
         }
 
         /// <summary>
-        /// Get all areas within the given bounding box.
+        /// Retrieves all areas within the specified bounding box.
         /// </summary>
+        /// <remarks>
+        /// Requires JWT authentication.
+        /// The bounding box is defined by the southwest (minLng, minLat) and northeast (maxLng, maxLat) coordinates.
+        /// </remarks>
+        /// <param name="minLng">Minimum longitude (southwest corner).</param>
+        /// <param name="minLat">Minimum latitude (southwest corner).</param>
+        /// <param name="maxLng">Maximum longitude (northeast corner).</param>
+        /// <param name="maxLat">Maximum latitude (northeast corner).</param>
+        /// <returns>
+        /// Returns 200 OK with a list of areas within the bounding box.
+        /// </returns>
         [HttpGet]
         public async Task<IActionResult> GetAreas([FromQuery] double minLng, [FromQuery] double minLat,
                                                   [FromQuery] double maxLng, [FromQuery] double maxLat)
@@ -111,8 +131,19 @@ namespace Snapland.Server.Api.Controllers
             return Ok(results);
         }
 
+        /// <summary>
+        /// Retrieves a specific area by its unique identifier.
+        /// </summary>
+        /// <remarks>
+        /// Requires JWT authentication.
+        /// </remarks>
+        /// <param name="id">The unique identifier of the area.</param>
+        /// <returns>
+        /// Returns 200 OK with the area data if found, or 404 Not Found if the area does not exist.
+        /// </returns>
         [HttpGet("{id:long}")]
         public async Task<ActionResult<AreaDto>> GetById(Guid id)
+
         {
             var userId = User.GetUserId();
             var area = await _db.Areas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && x.CreatedByUserId == userId);
@@ -120,8 +151,20 @@ namespace Snapland.Server.Api.Controllers
             return Ok(area.ToDto());
         }
 
-        [HttpDelete("{id:long}")]
+        /// <summary>
+        /// Soft deletes an area by its unique identifier.
+        /// </summary>
+        /// <remarks>
+        /// Marks the area as deleted without permanently removing it from the database.
+        /// Requires JWT authentication.
+        /// </remarks>
+        /// <param name="id">The unique identifier of the area to be soft deleted.</param>
+        /// <returns>
+        /// Returns 204 No Content if deletion was successful, or 404 Not Found if the area does not exist.
+        /// </returns>
+        [HttpDelete("{id:guid}")]
         public async Task<IActionResult> SoftDelete(Guid id)
+
         {
             var userId = User.GetUserId();
             var area = await _db.Areas.FirstOrDefaultAsync(x => x.Id == id);

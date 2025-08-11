@@ -16,6 +16,18 @@ public class AreaVersionsController : ControllerBase
     private readonly AppDbContext _db;
     public AreaVersionsController(AppDbContext db) => _db = db;
 
+    /// <summary>
+    /// Create a new version for the specified area.
+    /// </summary>
+    /// <remarks>
+    /// Adds a new version with updated geometry or name for an existing area.
+    /// Requires JWT authentication.
+    /// </remarks>
+    /// <param name="areaId">The unique identifier of the area.</param>
+    /// <param name="dto">The data required to create a new area version.</param>
+    /// <returns>
+    /// Returns 201 Created with version details, or 404 Not Found if the area does not exist.
+    /// </returns>
     [HttpPost("{areaId:guid}/versions")]
     public async Task<IActionResult> CreateVersion([FromRoute] Guid areaId, [FromBody] AreaVersionCreateDto dto)
     {
@@ -59,6 +71,17 @@ public class AreaVersionsController : ControllerBase
         });
     }
 
+    /// <summary>
+    /// Get all versions for a specific area.
+    /// </summary>
+    /// <remarks>
+    /// Returns a list of all saved versions (including geometry and metadata) for the specified area.
+    /// Requires JWT authentication.
+    /// </remarks>
+    /// <param name="areaId">The unique identifier of the area.</param>
+    /// <returns>
+    /// Returns 200 OK with a list of versions, or 404 Not Found if the area does not exist.
+    /// </returns>
     [HttpGet("{areaId}/versions")]
     public async Task<IActionResult> GetVersions([FromRoute] Guid areaId)
     {

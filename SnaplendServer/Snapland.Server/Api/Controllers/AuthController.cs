@@ -22,6 +22,18 @@ namespace Snapland.Server.Api.Controllers
             _tokenService = tokenService;
         }
 
+        /// <summary>
+        /// Register a new user account.
+        /// </summary>
+        /// <remarks>
+        /// Creates a new user with the given credentials.  
+        /// On success, returns an authentication token.
+        /// </remarks>
+        /// <param name="req">The registration details (email, password, etc.).</param>
+        /// <returns>
+        /// 201 Created with a JWT token on success,  
+        /// or 400 Bad Request if registration fails (e.g., user already exists).
+        /// </returns>
         [HttpPost("register")]
         public async Task<ActionResult<AuthResponse>> Register(RegisterRequest req)
         {
@@ -44,6 +56,17 @@ namespace Snapland.Server.Api.Controllers
             return Ok(new AuthResponse { Token = token, Email = user.Email, DisplayName = user.DisplayName });
         }
 
+        /// <summary>
+        /// Authenticate a user and return a JWT token.
+        /// </summary>
+        /// <remarks>
+        /// Validates the provided credentials and issues a JWT on success.
+        /// </remarks>
+        /// <param name="req">The login details (email and password).</param>
+        /// <returns>
+        /// 200 OK with an authentication token on success,  
+        /// or 401 Unauthorized if credentials are invalid.
+        /// </returns>
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponse>> Login(LoginRequest req)
         {
