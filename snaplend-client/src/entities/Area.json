@@ -1,0 +1,32 @@
+{
+    "name": "Area",
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Name of the area"
+      },
+      "geometry": {
+        "type": "object",
+        "description": "GeoJSON geometry of the polygon"
+      },
+      "area_km2": {
+        "type": "number",
+        "description": "Area in square kilometers"
+      },
+      "bounds": {
+        "type": "object",
+        "description": "Bounding box of the area"
+      },
+      "version": {
+        "type": "integer",
+        "default": 1,
+        "description": "Version number for tracking changes"
+      }
+    },
+    "required": [
+      "name",
+      "geometry",
+      "area_km2"
+    ]
+  }
