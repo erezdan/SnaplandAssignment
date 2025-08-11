@@ -14,7 +14,7 @@ namespace Snapland.Server.Domain.Entities
         public string Email { get; set; } = default!;
 
         [Column("display_name")]
-        public string? DisplayName { get; set; }
+        public string DisplayName { get; set; } = string.Empty;
 
         [Column("password_hash")]
         public string PasswordHash { get; set; } = string.Empty;
