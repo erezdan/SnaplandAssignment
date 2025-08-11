@@ -8,7 +8,13 @@ const AuthService = {
    * @param {Object} user - The user object returned from the login API (including token, email, displayName).
    */
   onLogin(user) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+    console.log('AuthService.onLogin called with:', user);
+    if (user && typeof user === 'object') {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      console.log('User saved to localStorage:', JSON.stringify(user));
+    } else {
+      console.error('Invalid user data passed to onLogin:', user);
+    }
   },
 
   /**
@@ -23,8 +29,19 @@ const AuthService = {
    * @returns {Object|null} user object or null if not logged in.
    */
   getCurrentUser() {
-    const user = localStorage.getItem(STORAGE_KEY);
-    return user ? JSON.parse(user) : null;
+    try {
+      const user = localStorage.getItem(STORAGE_KEY);
+      // Check if user exists and is not undefined/null/empty string
+      if (user && user !== 'undefined' && user !== 'null' && user.trim() !== '') {
+        return JSON.parse(user);
+      }
+      return null;
+    } catch (error) {
+      console.error('Error parsing user from localStorage:', error);
+      // If there's an error parsing, remove the invalid data
+      localStorage.removeItem(STORAGE_KEY);
+      return null;
+    }
   },
 
   /**
@@ -41,7 +58,9 @@ const AuthService = {
    * @returns {boolean}
    */
   isAuthenticated() {
-    return !!this.getToken();
+    const token = this.getToken();
+    console.log('AuthService.isAuthenticated() called - token:', token, 'result:', !!token);
+    return !!token;
   },
 };
 

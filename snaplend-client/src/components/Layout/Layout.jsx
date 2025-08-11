@@ -1,5 +1,6 @@
 import React from "react";
 import { User} from "../../entities/User";
+import AuthService from "../../services/auth-service";
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = React.useState(null);
@@ -11,9 +12,15 @@ export default function Layout({ children, currentPageName }) {
 
   const checkAuth = async () => {
     try {
-      const userData = await User.me();
-      setUser(userData);
+      // Only make API call if there's a user token in localStorage
+      if (AuthService.isAuthenticated()) {
+        const userData = await User.me();
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
     } catch (error) {
+      console.log('Layout checkAuth error:', error);
       setUser(null);
     }
     setIsLoading(false);

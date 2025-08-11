@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { useToastStore } from "./use-toast-base";
+import { useToastStore } from "./use-toast";
 
 export function Toaster() {
   const { toasts, removeToast } = useToastStore();
@@ -13,17 +13,15 @@ export function Toaster() {
 
   return (
     <div className="fixed top-4 right-4 z-50 space-y-2">
-      {toasts.map((toast) => (
+      {toasts.map((t) => (
         <div
-          key={toast.id}
-          className={`rounded-lg border shadow-lg p-4 bg-white ${
-            toast.variant === "destructive"
-              ? "border-red-500 text-red-700"
-              : "border-gray-200 text-gray-900"
+          key={t.id}
+          className={`rounded-lg p-4 shadow-md text-white ${
+            t.variant === "destructive" ? "bg-red-600" : "bg-green-600"
           }`}
         >
-          <div className="font-semibold">{toast.title}</div>
-          {toast.description && <div className="text-sm">{toast.description}</div>}
+          <div className="font-bold">{t.title}</div>
+          <div>{t.description}</div>
         </div>
       ))}
     </div>

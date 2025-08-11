@@ -2,8 +2,11 @@ import React, { useEffect } from "react";
 import ReactDOM from "react-dom";
 
 export function Dialog({ open, onClose, children }) {
+  console.log('Dialog render - open:', open, 'onClose function:', onClose);
+
   useEffect(() => {
-    if (!open) return; // ⬅️ התנאי עבר לתוך ה־hook
+    console.log('Dialog useEffect - open changed to:', open);
+    if (!open) return;
 
     const onKeyDown = (e) => {
       if (e.key === "Escape") onClose();
@@ -11,11 +14,17 @@ export function Dialog({ open, onClose, children }) {
     document.addEventListener("keydown", onKeyDown);
 
     return () => {
+      console.log('Dialog useEffect cleanup - removing keydown listener');
       document.removeEventListener("keydown", onKeyDown);
     };
-  }, [open, onClose]);
+  }, [open]); // Removed onClose from dependencies
 
-  if (!open) return null;
+  if (!open) {
+    console.log('Dialog not rendering - open is false');
+    return null;
+  }
+
+  console.log('Dialog rendering with open=true');
 
   return ReactDOM.createPortal(
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">

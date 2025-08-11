@@ -17,6 +17,7 @@ import ActiveUsers from "../components/gis/ActiveUsers";
 import MapControls from "../components/gis/MapControls";
 import LayerSwitcher from "../components/gis/LayerSwitcher";
 import DrawingManager from "../components/gis/DrawingManager";
+import AuthService from "../services/auth-service"; // Import for authentication
 
 // Fix default markers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -56,9 +57,16 @@ export default function GISMapPage() {
 
   const checkAuth = async () => {
     try {
-      const userData = await User.me();
-      setUser(userData);
+      // Only make API call if there's a user token in localStorage
+      if (AuthService.isAuthenticated()) {
+        const userData = await User.me();
+        setUser(userData);
+      } else {
+        setUser(null);
+      }
     } catch (error) {
+      console.log('GISMapPage checkAuth error:', error);
+      setUser(null);
     }
     setIsLoading(false);
   };

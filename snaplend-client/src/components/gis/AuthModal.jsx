@@ -1,5 +1,10 @@
-import React, { useState } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import React, { useState, useEffect } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
@@ -7,17 +12,28 @@ import AuthApi from "../../api/auth-api";
 import AuthService from "../../services/auth-service";
 import { useToast } from "../ui/use-toast";
 
-export default function AuthModal({ onClose }) {
+export default function AuthModal({ open, onClose }) {
   const [mode, setMode] = useState("login"); // "login" or "register"
   const [form, setForm] = useState({ email: "", password: "", full_name: "" });
   const [loading, setLoading] = useState(false);
-
   const { toast } = useToast();
 
-  toast({
-    title: "Success",
-    description: "You are now logged in.",
-  });
+  console.log('AuthModal render - open:', open, 'mode:', mode);
+
+  useEffect(() => {
+    console.log('AuthModal useEffect - open changed to:', open);
+    if (open) {
+      console.log('AuthModal opened - setting mode to register');
+      setMode("register"); // Default to register mode when no user exists
+    }
+  }, [open]);
+
+  useEffect(() => {
+    console.log('AuthModal component mounted');
+    return () => {
+      console.log('AuthModal component unmounted');
+    };
+  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -29,8 +45,15 @@ export default function AuthModal({ onClose }) {
 
     try {
       if (mode === "login") {
-        const result = await AuthApi.login({ email: form.email, password: form.password });
-        AuthService.login(result.user); // set local storage etc.
+        const result = await AuthApi.login({
+          email: form.email,
+          password: form.password,
+        });
+        // Don't call AuthService.onLogin here since auth-api.js already does it
+        toast({
+          title: "Success",
+          description: "You are now logged in.",
+        });
         onClose();
       } else {
         const result = await AuthApi.register({
@@ -38,19 +61,27 @@ export default function AuthModal({ onClose }) {
           password: form.password,
           full_name: form.full_name,
         });
-        AuthService.login(result.user); // login after registration
+        // Don't call AuthService.onLogin here since auth-api.js already does it
+        toast({
+          title: "Account created",
+          description: "You are now logged in.",
+        });
         onClose();
       }
     } catch (err) {
-      toast({ title: "Error", description: err.message, variant: "destructive" });
+      toast({
+        title: "Error",
+        description: err.message || "Something went wrong",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <Dialog open onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={open} onClose={onClose}>
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
             {mode === "login" ? "Login to Your Account" : "Create a New Account"}
