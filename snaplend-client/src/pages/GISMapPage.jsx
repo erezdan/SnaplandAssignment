@@ -1,14 +1,14 @@
 
 import React, { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
-import { User } from "@/entities/User";
-import { Area } from "@/entities/Area";
+import { User } from "../entities/User";
+import { Area } from "../entities/Area";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Button } from "../components/ui/button";
+import { Input } from "../components/ui/input";
+import { Badge } from "../components/ui/badge";
+import { Card, CardContent } from "../components/ui/card";
 import { Save, X } from "lucide-react";
 
 import AuthModal from "../components/gis/AuthModal";

@@ -1,6 +1,6 @@
 import React from "react";
 import { useMap } from "react-leaflet";
-import { Button } from "@/components/ui/button";
+import { Button } from "../ui/button";
 import { Plus, Minus, Navigation } from "lucide-react";
 
 export default function MapControls() {

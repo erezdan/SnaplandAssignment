@@ -1,5 +1,5 @@
 import React from "react";
-import { User } from "@/entities/User";
+import { User} from "../../entities/User";
 
 export default function Layout({ children, currentPageName }) {
   const [user, setUser] = React.useState(null);

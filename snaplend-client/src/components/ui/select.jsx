@@ -23,7 +23,6 @@ export function Select({
         {children}
       </select>
 
-      {/* חץ SVG בצד ימין */}
       <div className="pointer-events-none absolute inset-y-0 right-3 flex items-center text-gray-400">
         <svg
           className="w-4 h-4"
