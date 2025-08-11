@@ -11,7 +11,6 @@ import { Badge } from "../components/ui/badge";
 import { Card, CardContent } from "../components/ui/card";
 import { Save, X } from "lucide-react";
 
-import AuthModal from "../components/gis/AuthModal";
 import DrawingTools from "../components/gis/DrawingTools";
 import AreasList from "../components/gis/AreasList";
 import ActiveUsers from "../components/gis/ActiveUsers";
@@ -29,7 +28,6 @@ L.Icon.Default.mergeOptions({
 
 export default function GISMapPage() {
   const [user, setUser] = useState(null);
-  const [showAuthModal, setShowAuthModal] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [areas, setAreas] = useState([]);
   const [selectedArea, setSelectedArea] = useState(null);
@@ -61,7 +59,6 @@ export default function GISMapPage() {
       const userData = await User.me();
       setUser(userData);
     } catch (error) {
-      setShowAuthModal(true);
     }
     setIsLoading(false);
   };
@@ -82,7 +79,6 @@ export default function GISMapPage() {
   const handleLogout = async () => {
     await User.logout();
     setUser(null);
-    setShowAuthModal(true);
   };
 
   const handleSaveArea = async () => {
@@ -347,13 +343,6 @@ export default function GISMapPage() {
           </Card>
         </div>
       )}
-
-      {/* Authentication Modal */}
-      <AuthModal
-        isOpen={showAuthModal}
-        onClose={() => setShowAuthModal(false)}
-        onLogin={handleLogin}
-      />
     </div>
   );
 }
