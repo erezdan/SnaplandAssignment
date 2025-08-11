@@ -13,9 +13,18 @@ builder.Services.AddSwaggerGen();
 builder.Services.AddCors(o =>
 {
     o.AddPolicy("DevCors", p => p
-        .AllowAnyOrigin()
-        .AllowAnyHeader()
-        .AllowAnyMethod());
+        .WithOrigins("http://localhost:5173", "http://localhost:3000") // allow only dev front-end origins
+        .AllowAnyHeader() // allow all headers
+        .AllowAnyMethod() // allow all HTTP methods
+                          //.AllowCredentials() // uncomment if using cookies or SignalR with credentials
+        .SetPreflightMaxAge(TimeSpan.FromHours(1)) // reduce preflight request frequency
+    );
+});
+
+builder.Services.AddSingleton(sp =>
+{
+    var Nts = NtsGeometryServices.Instance;
+    return Nts.CreateGeometryFactory(srid: 4326);
 });
 
 // DbContext + NTS
@@ -40,6 +49,9 @@ if (app.Environment.IsDevelopment())
     app.UseCors("DevCors");
 }
 
-app.MapControllers();
+app.UseRouting();
+app.UseCors("DevCors"); // apply the DevCors policy
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.Run();

@@ -105,5 +105,24 @@ namespace Snapland.Server.Api.Controllers
 
             return Ok(results);
         }
+
+        [HttpGet("{id:long}")]
+        public async Task<ActionResult<AreaDto>> GetById(Guid id)
+        {
+            var area = await _db.Areas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
+            if (area is null) return NotFound();
+            return Ok(area.ToDto());
+        }
+
+        [HttpDelete("{id:long}")]
+        public async Task<IActionResult> SoftDelete(Guid id)
+        {
+            var area = await _db.Areas.FirstOrDefaultAsync(x => x.Id == id);
+            if (area is null) return NotFound();
+
+            area.IsDeleted = true;
+            await _db.SaveChangesAsync();
+            return NoContent();
+        }
     }
 }
