@@ -38,18 +38,18 @@ namespace Snapland.Server.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateArea([FromBody] AreaCreateDto dto)
         {
-            if (string.IsNullOrWhiteSpace(dto.Name) || dto.Coordinates is null || dto.Coordinates.Length < 4)
-                return BadRequest("Invalid polygon");
+            if (string.IsNullOrWhiteSpace(dto.Name))
+                return BadRequest("Area name is required.");
 
             var userId = User.GetUserId();
             var gf = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-            var shell = dto.Coordinates.Select(c => new Coordinate(c[0], c[1])).ToArray();
 
-            // Ensure the polygon is closed
-            if (shell[0].X != shell[^1].X || shell[0].Y != shell[^1].Y)
-                shell = shell.Concat(new[] { shell[0] }).ToArray();
+            // Use PolygonValidator to validate and build the polygon
+            var validationResult = PolygonValidator.FromLngLat(dto.Coordinates, gf);
+            if (!validationResult.IsValid)
+                return BadRequest(new { error = validationResult.Error });
 
-            var polygon = gf.CreatePolygon(shell);
+            var polygon = validationResult.Polygon!;
 
             var area = new Domain.Entities.Area
             {

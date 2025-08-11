@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using NetTopologySuite.Geometries;
 using Snapland.Server.Api.DTOs;
 using Snapland.Server.Api.Extensions.Snapland.Server.Api.Extensions;
+using Snapland.Server.Domain.Entities;
 using Snapland.Server.Infrastructure.Persistence;
 
 namespace Snapland.Server.Api.Controllers;
@@ -32,16 +33,24 @@ public class AreaVersionsController : ControllerBase
     public async Task<IActionResult> CreateVersion([FromRoute] Guid areaId, [FromBody] AreaVersionCreateDto dto)
     {
         var userId = User.GetUserId();
-        var area = await _db.Areas.FirstOrDefaultAsync(a => a.Id == areaId && !a.IsDeleted);
-        if (area == null) return NotFound("Area not found");
 
-        if (dto.Coordinates is null || dto.Coordinates.Length < 4) return BadRequest("Invalid polygon");
+        var area = await _db.Areas
+            .FirstOrDefaultAsync(a => a.Id == areaId && !a.IsDeleted);
+
+        if (area == null)
+            return NotFound("Area not found");
+
+        if (string.IsNullOrWhiteSpace(dto.Name))
+            return BadRequest("Version name is required.");
 
         var gf = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-        var shell = dto.Coordinates.Select(c => new Coordinate(c[0], c[1])).ToArray();
-        if (shell[0].X != shell[^1].X || shell[0].Y != shell[^1].Y) shell = shell.Concat(new[] { shell[0] }).ToArray();
 
-        var polygon = gf.CreatePolygon(shell);
+        // Use PolygonValidator
+        var validationResult = PolygonValidator.FromLngLat(dto.Coordinates, gf);
+        if (!validationResult.IsValid)
+            return BadRequest(new { error = validationResult.Error });
+
+        var polygon = validationResult.Polygon!;
 
         var nextVersion = await _db.AreaVersions
             .Where(v => v.AreaId == areaId)
@@ -49,7 +58,7 @@ public class AreaVersionsController : ControllerBase
             .Select(v => v.VersionNumber)
             .FirstOrDefaultAsync() + 1;
 
-        var version = new Domain.Entities.AreaVersion
+        var version = new AreaVersion
         {
             AreaId = areaId,
             VersionNumber = nextVersion,
