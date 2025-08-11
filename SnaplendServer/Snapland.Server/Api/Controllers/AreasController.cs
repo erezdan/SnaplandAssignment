@@ -124,12 +124,15 @@ namespace Snapland.Server.Api.Controllers
         public async Task<IActionResult> SoftDelete(Guid id)
         {
             var userId = User.GetUserId();
-            var area = await _db.Areas.FirstOrDefaultAsync(x => x.Id == id && x.CreatedByUserId == userId);
+            var area = await _db.Areas.FirstOrDefaultAsync(x => x.Id == id);
             if (area is null) return NotFound();
+
+            if (area.CreatedByUserId != userId)
+                return Forbid("You can only delete areas you created.");
 
             area.IsDeleted = true;
             await _db.SaveChangesAsync();
             return NoContent();
-        }
+        }   
     }
 }
