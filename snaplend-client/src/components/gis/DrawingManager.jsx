@@ -35,49 +35,55 @@ const calculateArea = (latlngs) => {
 
 export default function DrawingManager({ isDrawing, onAreaUpdate, onPolygonComplete }) {
   const [points, setPoints] = useState([]);
-  
+  const [clickTimeout, setClickTimeout] = useState(null);
+
   const map = useMapEvents({
     click(e) {
       if (!isDrawing) return;
-      const newPoints = [...points, e.latlng];
-      setPoints(newPoints);
-      const area = calculateArea(newPoints);
-      onAreaUpdate(area);
+
+      // small delay to ignot the cklick
+      if (clickTimeout) clearTimeout(clickTimeout);
+
+      const timeout = setTimeout(() => {
+        const newPoints = [...points, e.latlng];
+        setPoints(newPoints);
+        const area = calculateArea(newPoints);
+        onAreaUpdate(area);
+      }, 200);
+
+      setClickTimeout(timeout);
     },
+
     dblclick(e) {
       if (!isDrawing || points.length < 2) return;
-      // Add the final point to close the polygon
+      
+      if (clickTimeout) {
+        clearTimeout(clickTimeout);
+        setClickTimeout(null);
+      }
+
       const finalPoints = [...points, e.latlng];
       onPolygonComplete(finalPoints);
-      setPoints([]); // Reset points for the next drawing
-    },
-    mousemove(e) {
-        if (!isDrawing || points.length === 0) return;
-        // This is where you could implement a "rubber-band" line to the cursor
-        // For now, we'll keep it simple.
+      setPoints([]);
     }
   });
 
   useEffect(() => {
     if (isDrawing) {
       map.getContainer().style.cursor = 'crosshair';
-      setPoints([]); // Ensure points are cleared when starting a new drawing
+      setPoints([]);
     } else {
       map.getContainer().style.cursor = '';
-      setPoints([]); // Clear points if drawing is cancelled externally
+      setPoints([]);
     }
-    
-    // Cleanup cursor on unmount
+
     return () => {
-        if(map.getContainer()) {
-            map.getContainer().style.cursor = '';
-        }
+      if (map.getContainer()) map.getContainer().style.cursor = '';
+      if (clickTimeout) clearTimeout(clickTimeout);
     };
   }, [isDrawing, map]);
 
-  if (!isDrawing || points.length === 0) {
-    return null;
-  }
+  if (!isDrawing || points.length === 0) return null;
 
   return (
     <Polygon
