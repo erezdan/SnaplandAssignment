@@ -274,8 +274,8 @@ export default function GISMapPage() {
             />
           ) : (
             <TileLayer
-              url="https://israelhiking.osm.org.il/Hebrew/tiles/{z}/{x}/{y}.png"
-              attribution='&copy; <a href="https://govmap.gov.il">GovMap</a>'
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+              attribution='Tiles &copy; Esri'
             />
           )}
           
