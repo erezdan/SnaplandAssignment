@@ -94,12 +94,14 @@ export default function GISMapPage() {
   };
 
   const handleLogin = async () => {
-    await checkAuth();
+    const userData = await checkAuth();
     setShowAuthModal(false);
 
-    const users = await getAllUsersStatus();
-    setActiveUsers(users);
-    await loadAreas();
+    if (userData) {
+      const users = await getAllUsersStatus();
+      setActiveUsers(users);
+      await loadAreas();
+    }
   };
 
   const handleLogout = () => {
