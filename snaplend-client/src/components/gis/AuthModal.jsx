@@ -56,10 +56,14 @@ export default function AuthModal({ open, onClose }) {
     }
   };
 
+  const handleClose = () =>{
+    onClose();
+  }
+
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center z-[1000] bg-gradient-to-br from-slate-100 to-white">
+    <div className="fixed inset-0 flex items-center justify-center z-[1000] backdrop-blur-sm bg-white/20">
       <Card className="w-full max-w-md bg-white shadow-2xl rounded-xl animate-fade-in">
         <CardHeader className="border-b border-slate-100 pb-4">
           <div className="flex items-center justify-between">
@@ -69,7 +73,7 @@ export default function AuthModal({ open, onClose }) {
             <Button
               size="sm"
               variant="ghost"
-              onClick={onClose}
+              onClick={handleClose}
               className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
             >
               <X className="w-4 h-4" />

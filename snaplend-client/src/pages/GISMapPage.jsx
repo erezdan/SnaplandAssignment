@@ -148,6 +148,10 @@ export default function GISMapPage() {
     setCurrentArea(0);
   };
 
+  const closeAuthModal = () => {
+    setShowAuthModal(false);
+  }
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
@@ -156,12 +160,6 @@ export default function GISMapPage() {
           <p className="text-slate-600 font-medium">Loading GIS Application...</p>
         </div>
       </div>
-    );
-  }
-
-  if (showAuthModal) {
-    return (
-      <AuthModal open={true} onClose={handleLogin} />
     );
   }
 
@@ -374,7 +372,11 @@ export default function GISMapPage() {
               </div>
             </CardContent>
           </Card>
+
         </div>
+      )}
+      {showAuthModal && (
+        <AuthModal open={true} onClose={closeAuthModal} />
       )}
     </div>
   );
