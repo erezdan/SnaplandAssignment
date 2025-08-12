@@ -2,7 +2,7 @@ import React from "react";
 import { Button } from "../ui/button";
 import { Card, CardContent } from "../ui/card";
 import { 
-  Square, 
+  Shapes, 
   X,
   Ruler
 } from "lucide-react";
@@ -28,7 +28,7 @@ export default function DrawingTools({
                 disabled={isDrawing}
                 className="w-full justify-start"
               >
-                <Square className="w-4 h-4 mr-2" />
+                <Shapes className="w-4 h-4 mr-2" />
                 Draw Area
               </Button>
               
