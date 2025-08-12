@@ -5,6 +5,8 @@
     /// </summary>
     public class UserStatusDto
     {
+        public Guid Id { get; set; }
+
         /// <summary>
         /// The display name of the user.
         /// </summary>

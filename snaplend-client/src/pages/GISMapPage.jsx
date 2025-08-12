@@ -11,7 +11,6 @@ import { Badge } from "../components/ui/badge";
 import { Card, CardContent } from "../components/ui/card";
 import { Save, X } from "lucide-react";
 import { createArea, getAreas } from "../api/area-api";
-import { getAllUsersStatus } from "../api/users-api";
 import { useToast } from "../components/ui/use-toast";
 import MapRefConnector from "../utiles/MapRefConnector";
 
@@ -38,7 +37,6 @@ export default function GISMapPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [areas, setAreas] = useState([]);
   const [selectedArea, setSelectedArea] = useState(null);
-  const [activeUsers, setActiveUsers] = useState([]);
   const [currentLayer, setCurrentLayer] = useState("osm");
   const [isDrawing, setIsDrawing] = useState(false);
   const [currentArea, setCurrentArea] = useState(0);
@@ -57,8 +55,6 @@ export default function GISMapPage() {
       if (userData) {
         // Only call authenticated APIs if user is authenticated
         try {
-          const users = await getAllUsersStatus();
-          setActiveUsers(users);
           await loadAreas();
         } catch (error) {
           console.error('Error loading data:', error);
@@ -118,8 +114,6 @@ export default function GISMapPage() {
       
       // Load data after successful login
       try {
-        const users = await getAllUsersStatus();
-        setActiveUsers(users);
         await loadAreas();
       } catch (error) {
         console.error('Error loading data after login:', error);
@@ -136,6 +130,18 @@ export default function GISMapPage() {
     AuthService.onLogout();
     setUser(null);
   };
+
+  const handleDisplayAreas = async ()=>{
+    if (!areas || areas.length === 0) {
+      // Load data after successful login
+      try {
+        await loadAreas();
+      } catch (error) {
+        console.error('Error loading data after login:', error);
+      }
+    }
+    setShowAreasList(!showAreasList);
+  }
 
   const handleSaveArea = async () => {
     if (!finalPolygon || !areaName.trim()) return;
@@ -223,7 +229,7 @@ export default function GISMapPage() {
             <>
               {/* Toggle areas panel - visible only on medium screens and up */}
               <button
-                onClick={() => setShowAreasList(!showAreasList)}
+                onClick={() => handleDisplayAreas()}
                 className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -239,7 +245,7 @@ export default function GISMapPage() {
               >
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-medium">
-                  {activeUsers.filter(u => u.isActive).length} Online
+                  {/*activeUsers.filter(u => u.isActive).length*/ 0} Online
                 </span>
               </button>
 
@@ -248,11 +254,11 @@ export default function GISMapPage() {
                 <div className="flex items-center space-x-2">
                   <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-sky-600 rounded-full flex items-center justify-center">
                     <span className="text-sm font-semibold text-white">
-                      {user.full_name?.charAt(0)?.toUpperCase() || "U"}
+                      {user.displayName?.charAt(0)?.toUpperCase() || "U"}
                     </span>
                   </div>
                   <div className="hidden sm:block">
-                    <p className="text-sm font-medium text-slate-900">{user.full_name}</p>
+                    <p className="text-sm font-medium text-slate-900">{user.displayName}</p>
                     <p className="text-xs text-slate-500">{user.email}</p>
                   </div>
                 </div>
@@ -356,7 +362,6 @@ export default function GISMapPage() {
         {/* Active Users Panel */}
         {user && showActiveUsers && (
           <ActiveUsers
-            users={activeUsers}
             currentUser={user}
             onClose={() => setShowActiveUsers(false)}
           />

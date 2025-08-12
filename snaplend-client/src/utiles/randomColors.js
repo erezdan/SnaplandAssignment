@@ -1,27 +1,35 @@
 const pastelPalette = [
-    "#f9c5d1", // light pink
-    "#fcd5ce", // peach
-    "#fde2e4", // soft rose
-    "#d8e2dc", // mint
-    "#a9def9", // light blue
-    "#e4c1f9", // lavender
-    "#caffbf", // light green
-    "#b5ead7", // mint green
-    "#f0efeb", // cream
-    "#ffc8dd", // pinkish
-    "#bdb2ff", // purple pastel
-    "#fdffb6", // yellow pastel
-  ];
-  
-  function getRandomFromArray(arr) {
-    const index = Math.floor(Math.random() * arr.length);
-    return arr[index];
+  "#EF5350", // Red
+  "#AB47BC", // Purple
+  "#42A5F5", // Blue
+  "#26A69A", // Teal
+  "#66BB6A", // Green
+  "#FFA726", // Orange
+  "#FFCA28", // Yellow
+  "#8D6E63", // Brown
+  "#5C6BC0", // Indigo
+  "#EC407A", // Pink
+];
+
+// Hash a string to a consistent number
+function hashString(str) {
+  let hash = 0;
+  for (let i = 0; i < str.length; i++) {
+    hash = str.charCodeAt(i) + ((hash << 5) - hash);
+    hash |= 0; // Convert to 32bit integer
   }
-  
-  export function assignPastelColorsToUsers(users) {
-    return users.map(user => ({
-      ...user,
-      color: getRandomFromArray(pastelPalette),
-    }));
-  }
-  
+  return Math.abs(hash);
+}
+
+// Assign a consistent color from the palette based on user.id
+function getColorForUserId(userId) {
+  const index = hashString(userId) % pastelPalette.length;
+  return pastelPalette[index];
+}
+
+export function assignPastelColorsToUsers(users) {
+  return users.map(user => ({
+    ...user,
+    color: getColorForUserId(user.id),
+  }));
+}

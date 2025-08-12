@@ -32,6 +32,7 @@ namespace Snapland.Server.Api.Controllers
                 .OrderBy(u => u.DisplayName)
                 .Select(u => new UserStatusDto
                 {
+                    Id = u.Id,
                     DisplayName = u.DisplayName,
                     IsActive = u.IsActive
                 })

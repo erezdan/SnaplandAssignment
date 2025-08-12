@@ -1,20 +1,20 @@
-import React from "react";
+import React, { useContext } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
 import { ScrollArea } from "../ui/scroll-area";
-import { 
-  X, 
-  Users, 
-  Circle,
-  Clock,
-  Palette
-} from "lucide-react";
+import { X, Users, Circle, Clock, Palette } from "lucide-react";
 import { assignPastelColorsToUsers } from "../../utiles/randomColors";
+import { WebSocketContext } from "../../contexts/WebSocketContext";
 
-export default function ActiveUsers({ users, currentUser, onClose }) {
-  const coloredUsers = assignPastelColorsToUsers(users);
-  const activeUsers = coloredUsers.filter(user => user.isActive);
+export default function ActiveUsers({ currentUser, onClose }) {
+  const { activeUsers } = useContext(WebSocketContext);
+
+  // Convert object to array and assign colors
+  const coloredUsers = assignPastelColorsToUsers(Object.values(activeUsers || {}));
+
+  // Split into active and inactive users
+  const activeColoredUsers = coloredUsers.filter(user => user.isActive);
   const inactiveUsers = coloredUsers.filter(user => !user.isActive);
 
   return (
@@ -36,31 +36,32 @@ export default function ActiveUsers({ users, currentUser, onClose }) {
         </div>
         <div className="flex items-center space-x-2 text-sm text-slate-600">
           <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-          <span>{activeUsers.length} users online</span>
+          <span>{activeColoredUsers.length} users online</span>
         </div>
       </CardHeader>
-      
+
       <CardContent className="p-0">
         <ScrollArea style={{ maxHeight: 'calc(100vh - 220px)' }}>
           <div className="p-4 space-y-4">
+
             {/* Active Users Section */}
             <div>
               <div className="flex items-center space-x-2 mb-3">
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <h4 className="text-sm font-semibold text-slate-700">Currently Active</h4>
                 <Badge variant="secondary" className="text-xs">
-                  {activeUsers.length}
+                  {activeColoredUsers.length}
                 </Badge>
               </div>
-              
+
               <div className="space-y-2">
-                {activeUsers.map((user) => (
+                {activeColoredUsers.map((user) => (
                   <div
                     key={user.id}
                     className="flex items-center justify-between p-3 rounded-lg bg-green-50 border border-green-200"
                   >
                     <div className="flex items-center space-x-3">
-                      <div 
+                      <div
                         className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
                         style={{ backgroundColor: user.color }}
                       >
@@ -81,9 +82,9 @@ export default function ActiveUsers({ users, currentUser, onClose }) {
                         </div>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center space-x-2">
-                      <div 
+                      <div
                         className="w-4 h-4 rounded border-2 border-white shadow-sm"
                         style={{ backgroundColor: user.color }}
                         title="User color indicator"
@@ -91,8 +92,8 @@ export default function ActiveUsers({ users, currentUser, onClose }) {
                     </div>
                   </div>
                 ))}
-                
-                {activeUsers.length === 0 && (
+
+                {activeColoredUsers.length === 0 && (
                   <div className="text-center py-4 text-slate-500">
                     <Users className="w-8 h-8 mx-auto mb-2 text-slate-400" />
                     <p className="text-sm">No users currently active</p>
@@ -108,7 +109,7 @@ export default function ActiveUsers({ users, currentUser, onClose }) {
                   <Clock className="w-3 h-3 text-slate-400" />
                   <h4 className="text-sm font-semibold text-slate-700">Recently Active</h4>
                 </div>
-                
+
                 <div className="space-y-2">
                   {inactiveUsers.map((user) => (
                     <div
@@ -116,7 +117,7 @@ export default function ActiveUsers({ users, currentUser, onClose }) {
                       className="flex items-center justify-between p-2 rounded-lg bg-slate-50"
                     >
                       <div className="flex items-center space-x-3">
-                        <div 
+                        <div
                           className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium opacity-60"
                           style={{ backgroundColor: user.color }}
                         >
@@ -130,7 +131,7 @@ export default function ActiveUsers({ users, currentUser, onClose }) {
                 </div>
               </div>
             )}
-            
+
             {/* Color Legend */}
             <div className="pt-3 border-t border-slate-100">
               <div className="flex items-center space-x-2 text-xs text-slate-500">
@@ -138,6 +139,7 @@ export default function ActiveUsers({ users, currentUser, onClose }) {
                 <span>Each user has a unique color for their drawings</span>
               </div>
             </div>
+
           </div>
         </ScrollArea>
       </CardContent>
