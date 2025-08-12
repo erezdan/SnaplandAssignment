@@ -10,8 +10,9 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent } from "../components/ui/card";
 import { Save, X } from "lucide-react";
-import { createArea } from "../api/area-api"; 
+import { createArea, getAreas } from "../api/area-api"; 
 import { useToast } from "../components/ui/use-toast";
+import MapRefConnector from "../utiles/MapRefConnector";
 
 import DrawingTools from "../components/gis/DrawingTools";
 import AreasList from "../components/gis/AreasList";
@@ -46,12 +47,11 @@ export default function GISMapPage() {
   const [showAreasList, setShowAreasList] = useState(false);
   const [showActiveUsers, setShowActiveUsers] = useState(false);
   
-  const mapRef = useRef();
+  const mapRef = useRef(null);
   const { toast } = useToast();
 
   useEffect(() => {
     checkAuth();
-    loadAreas();
     // Simulate active users for demo
     setActiveUsers([
       { id: 1, name: "Sarah Chen", color: "#10b981", isActive: true },
@@ -79,8 +79,16 @@ export default function GISMapPage() {
   };
 
   const loadAreas = async () => {
+    if (!mapRef.current) return;
+  
+    const bounds = mapRef.current.getBounds();
+    const minLat = bounds.getSouth();
+    const maxLat = bounds.getNorth();
+    const minLng = bounds.getWest();
+    const maxLng = bounds.getEast();
+  
     try {
-      const areasData = await Area.list("-updated_date");
+      const areasData = await getAreas(minLng, minLat, maxLng, maxLat);
       setAreas(areasData);
     } catch (error) {
       console.error("Error loading areas:", error);
@@ -253,8 +261,12 @@ export default function GISMapPage() {
           zoom={10}
           className="w-full h-full"
           zoomControl={false}
-          whenCreated={mapInstance => { mapRef.current = mapInstance }}
         >
+            <MapRefConnector onMapReady={(mapInstance) => {
+              mapRef.current = mapInstance;
+              loadAreas();
+            }} />
+
           {currentLayer === "osm" ? (
             <TileLayer
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"

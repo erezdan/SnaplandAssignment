@@ -6,6 +6,7 @@
     public class AreaResultDto
     {
         public Guid Id { get; set; }
+
         public string Name { get; set; } = default!;
 
         /// <summary>
@@ -17,5 +18,15 @@
         /// Polygon coordinates as [ [lng, lat], ... ].
         /// </summary>
         public IEnumerable<double[]> Coordinates { get; set; } = default!;
+
+        /// <summary>
+        /// The display name of the user who created the area.
+        /// </summary>
+        public string UserDisplayName { get; set; } = default!;
+
+        /// <summary>
+        /// The date and time when the area was created (UTC).
+        /// </summary>
+        public DateTime CreatedAt { get; set; }
     }
 }

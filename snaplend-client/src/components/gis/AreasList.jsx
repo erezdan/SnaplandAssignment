@@ -81,19 +81,19 @@ export default function AreasList({ areas, selectedArea, onAreaSelect, onClose }
                         <div className="flex items-center space-x-2">
                           <Ruler className="w-3 h-3 text-slate-400" />
                           <Badge variant="secondary" className="text-xs">
-                            {area.area_km2?.toFixed(3)} km²
+                            {area.areaKm2?.toFixed(3)} km²
                           </Badge>
                         </div>
                         
                         <div className="flex items-center space-x-2 text-xs text-slate-500">
                           <User className="w-3 h-3" />
-                          <span>{area.created_by || "Unknown"}</span>
+                          <span>{area.userDisplayName || "Unknown"}</span>
                         </div>
                         
                         <div className="flex items-center space-x-2 text-xs text-slate-500">
                           <Calendar className="w-3 h-3" />
                           <span>
-                            {format(new Date(area.created_date), "MMM d, yyyy")}
+                            {format(new Date(area.createdAt), "MMM d, yyyy")}
                           </span>
                         </div>
                       </div>

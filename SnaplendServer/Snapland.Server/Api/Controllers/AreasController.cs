@@ -104,31 +104,54 @@ namespace Snapland.Server.Api.Controllers
         public async Task<IActionResult> GetAreas([FromQuery] double minLng, [FromQuery] double minLat,
                                                   [FromQuery] double maxLng, [FromQuery] double maxLat)
         {
-            var envelopeWkt = $"POLYGON(({minLng} {minLat}, {minLng} {maxLat}, {maxLng} {maxLat}, {maxLng} {minLat}, {minLng} {minLat}))";
-
-            var gf = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-            var envelope = gf.CreatePolygon(new[]
+            try
             {
-                new Coordinate(minLng, minLat),
-                new Coordinate(minLng, maxLat),
-                new Coordinate(maxLng, maxLat),
-                new Coordinate(maxLng, minLat),
-                new Coordinate(minLng, minLat) // close polygon
-            });
-
-            var userId = User.GetUserId();
-            var results = await _db.Areas
-                .Where(a => a.CreatedByUserId == userId && !a.IsDeleted && a.Geometry.Intersects(envelope))
-                .Select(a => new AreaResultDto
+                var gf = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
+                var envelope = gf.CreatePolygon(new[]
                 {
-                    Id = a.Id,
-                    Name = a.Name,
-                    AreaKm2 = EF.Property<double>(a, "AreaKm2"),
-                    Coordinates = a.Geometry.Coordinates.Select(c => new[] { c.X, c.Y })
-                })
-                .ToListAsync();
+                    new Coordinate(minLng, minLat),
+                    new Coordinate(minLng, maxLat),
+                    new Coordinate(maxLng, maxLat),
+                    new Coordinate(maxLng, minLat),
+                    new Coordinate(minLng, minLat) // close polygon
+                });
 
-            return Ok(results);
+                var userId = User.GetUserId();
+
+                var rawResults = await (
+                    from area in _db.Areas
+                    join user in _db.Users on area.CreatedByUserId equals user.Id
+                    where area.CreatedByUserId == userId &&
+                            !area.IsDeleted &&
+                            area.Geometry.Intersects(envelope)
+                    select new
+                    {
+                        area.Id,
+                        area.Name,
+                        AreaKm2 = EF.Property<double>(area, "AreaKm2"),
+                        area.Geometry,
+                        area.CreatedAt,
+                        user.DisplayName
+                    }
+                ).ToListAsync();
+
+                var results = rawResults.Select(x => new AreaResultDto
+                {
+                    Id = x.Id,
+                    Name = x.Name,
+                    AreaKm2 = x.AreaKm2,
+                    Coordinates = x.Geometry.Coordinates.Select(c => new[] { c.X, c.Y }),
+                    CreatedAt = x.CreatedAt,
+                    UserDisplayName = x.DisplayName
+                }).ToList();
+
+                return Ok(results);
+            }
+            catch(Exception ex)
+            {
+
+            }
+            return NoContent();
         }
 
         /// <summary>
@@ -176,6 +199,6 @@ namespace Snapland.Server.Api.Controllers
             area.IsDeleted = true;
             await _db.SaveChangesAsync();
             return NoContent();
-        }   
+        }
     }
 }
