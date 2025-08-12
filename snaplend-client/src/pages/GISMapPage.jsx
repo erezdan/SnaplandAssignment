@@ -88,8 +88,8 @@ export default function GISMapPage() {
   };
 
   const handleLogin = async () => {
-    const userData = await checkAuth();
-    if (userData) setShowAuthModal(false);
+    await checkAuth();
+    setShowAuthModal(false);
   };
 
   const handleLogout = () => {
@@ -147,10 +147,6 @@ export default function GISMapPage() {
     setAreaName("");
     setCurrentArea(0);
   };
-
-  const closeAuthModal = () => {
-    setShowAuthModal(false);
-  }
 
   if (isLoading) {
     return (
@@ -376,7 +372,7 @@ export default function GISMapPage() {
         </div>
       )}
       {showAuthModal && (
-        <AuthModal open={true} onClose={closeAuthModal} />
+        <AuthModal open={true} onClose={handleLogin} />
       )}
     </div>
   );
