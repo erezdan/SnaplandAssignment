@@ -41,8 +41,8 @@ export default function GISMapPage() {
   const [finalPolygon, setFinalPolygon] = useState(null);
   const [showSaveDialog, setShowSaveDialog] = useState(false);
   const [areaName, setAreaName] = useState("");
-  const [showAreasList, setShowAreasList] = useState(true);
-  const [showActiveUsers, setShowActiveUsers] = useState(true);
+  const [showAreasList, setShowAreasList] = useState(false);
+  const [showActiveUsers, setShowActiveUsers] = useState(false);
   
   const mapRef = useRef();
 
