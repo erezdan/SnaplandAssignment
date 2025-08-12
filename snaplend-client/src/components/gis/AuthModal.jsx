@@ -8,6 +8,8 @@ import { useToast } from "../ui/use-toast";
 import AuthService from "../../services/auth-service";
 import { X } from "lucide-react";
 
+// test
+
 export default function AuthModal({ open, onClose }) {
   const [mode, setMode] = useState("login");
   const [form, setForm] = useState({ email: "", password: "", display_name: "" });
