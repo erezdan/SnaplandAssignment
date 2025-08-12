@@ -10,7 +10,8 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent } from "../components/ui/card";
 import { Save, X } from "lucide-react";
-import { createArea, getAreas } from "../api/area-api"; 
+import { createArea, getAreas } from "../api/area-api";
+import { getAllUsersStatus } from "../api/users-api";
 import { useToast } from "../components/ui/use-toast";
 import MapRefConnector from "../utiles/MapRefConnector";
 
@@ -51,13 +52,14 @@ export default function GISMapPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    checkAuth();
-    // Simulate active users for demo
-    setActiveUsers([
-      { id: 1, name: "Sarah Chen", color: "#10b981", isActive: true },
-      { id: 2, name: "Mike Johnson", color: "#f59e0b", isActive: true },
-      { id: 3, name: "Emma Wilson", color: "#8b5cf6", isActive: false }
-    ]);
+    const init = async () => {
+      await checkAuth();
+      const users = await getAllUsersStatus();
+      setActiveUsers(users);
+      await loadAreas();
+    };
+  
+    init();
   }, []);
 
   const checkAuth = async () => {
@@ -78,16 +80,12 @@ export default function GISMapPage() {
     return null;
   };
 
-  const loadAreas = async () => {
-    if (!mapRef.current) return;
-  
-    const bounds = mapRef.current.getBounds();
-    const minLat = bounds.getSouth();
-    const maxLat = bounds.getNorth();
-    const minLng = bounds.getWest();
-    const maxLng = bounds.getEast();
-  
+  const loadAreas = async () => {    
     try {
+      const minLat = 31;
+      const maxLat = 31;
+      const minLng = 31;
+      const maxLng = 31; // israel space
       const areasData = await getAreas(minLng, minLat, maxLng, maxLat);
       setAreas(areasData);
     } catch (error) {
@@ -98,6 +96,10 @@ export default function GISMapPage() {
   const handleLogin = async () => {
     await checkAuth();
     setShowAuthModal(false);
+
+    const users = await getAllUsersStatus();
+    setActiveUsers(users);
+    await loadAreas();
   };
 
   const handleLogout = () => {
@@ -264,7 +266,6 @@ export default function GISMapPage() {
         >
             <MapRefConnector onMapReady={async (mapInstance) => {
               mapRef.current = mapInstance;
-              await loadAreas();
             }} />
 
           {currentLayer === "osm" ? (

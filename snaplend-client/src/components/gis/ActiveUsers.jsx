@@ -10,13 +10,15 @@ import {
   Clock,
   Palette
 } from "lucide-react";
+import { assignPastelColorsToUsers } from "../../utiles/randomColors";
 
 export default function ActiveUsers({ users, currentUser, onClose }) {
-  const activeUsers = users.filter(user => user.isActive);
-  const inactiveUsers = users.filter(user => !user.isActive);
+  const coloredUsers = assignPastelColorsToUsers(users);
+  const activeUsers = coloredUsers.filter(user => user.isActive);
+  const inactiveUsers = coloredUsers.filter(user => !user.isActive);
 
   return (
-    <Card className="absolute right-4 top-32 w-72 max-h-96 z-[1000] bg-white/95 backdrop-blur-sm shadow-2xl border-0 animate-slide-in">
+    <Card className="absolute right-4 top-32 w-72 max-h-[80vh] z-[1000] bg-white/95 backdrop-blur-sm shadow-2xl border-0 animate-slide-in">
       <CardHeader className="border-b border-slate-100 pb-4">
         <div className="flex items-center justify-between">
           <CardTitle className="text-lg font-bold text-slate-900 flex items-center">
@@ -39,7 +41,7 @@ export default function ActiveUsers({ users, currentUser, onClose }) {
       </CardHeader>
       
       <CardContent className="p-0">
-        <ScrollArea className="max-h-80">
+        <ScrollArea style={{ maxHeight: 'calc(100vh - 220px)' }}>
           <div className="p-4 space-y-4">
             {/* Active Users Section */}
             <div>
@@ -62,13 +64,13 @@ export default function ActiveUsers({ users, currentUser, onClose }) {
                         className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
                         style={{ backgroundColor: user.color }}
                       >
-                        {user.name.charAt(0).toUpperCase()}
+                        {user.displayName.charAt(0).toUpperCase()}
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
                           <p className="text-sm font-medium text-slate-900">
-                            {user.name}
-                            {user.name === currentUser?.full_name && (
+                            {user.displayName}
+                            {user.displayName === currentUser?.full_name && (
                               <span className="text-xs text-green-600 ml-1">(You)</span>
                             )}
                           </p>
@@ -118,9 +120,9 @@ export default function ActiveUsers({ users, currentUser, onClose }) {
                           className="w-6 h-6 rounded-full flex items-center justify-center text-white text-xs font-medium opacity-60"
                           style={{ backgroundColor: user.color }}
                         >
-                          {user.name.charAt(0).toUpperCase()}
+                          {user.displayName.charAt(0).toUpperCase()}
                         </div>
-                        <p className="text-sm text-slate-600">{user.name}</p>
+                        <p className="text-sm text-slate-600">{user.displayName}</p>
                       </div>
                       <div className="w-2 h-2 bg-slate-400 rounded-full"></div>
                     </div>

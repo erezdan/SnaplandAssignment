@@ -27,6 +27,7 @@ namespace Snapland.Server.Infrastructure.Persistence
                 e.HasIndex(x => x.Email).IsUnique();
 
                 e.Property(x => x.DisplayName).HasMaxLength(255);
+                e.Property(x => x.IsActive).HasDefaultValue(false);
                 e.Property(x => x.CreatedAt).HasColumnType("timestamp with time zone");
             });
 

@@ -59,7 +59,6 @@ const AuthService = {
    */
   isAuthenticated() {
     const token = this.getToken();
-    console.log('AuthService.isAuthenticated() called - token:', token, 'result:', !!token);
     return !!token;
   },
 };
