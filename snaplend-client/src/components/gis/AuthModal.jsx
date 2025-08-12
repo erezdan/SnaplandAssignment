@@ -1,39 +1,24 @@
 import React, { useState, useEffect } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "../ui/dialog";
+import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import AuthApi from "../../api/auth-api";
-import AuthService from "../../services/auth-service";
 import { useToast } from "../ui/use-toast";
+import AuthService from "../../services/auth-service";
+import { X } from "lucide-react";
 
 export default function AuthModal({ open, onClose }) {
-  const [mode, setMode] = useState("login"); // "login" or "register"
-  const [form, setForm] = useState({ email: "", password: "", full_name: "" });
+  const [mode, setMode] = useState("login");
+  const [form, setForm] = useState({ email: "", password: "", display_name: "" });
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  console.log('AuthModal render - open:', open, 'mode:', mode);
-
   useEffect(() => {
-    console.log('AuthModal useEffect - open changed to:', open);
     if (open) {
-      console.log('AuthModal opened - setting mode to register');
-      setMode("register"); // Default to register mode when no user exists
+      setMode("login");
     }
   }, [open]);
-
-  useEffect(() => {
-    console.log('AuthModal component mounted');
-    return () => {
-      console.log('AuthModal component unmounted');
-    };
-  }, []);
 
   const handleChange = (e) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -45,27 +30,19 @@ export default function AuthModal({ open, onClose }) {
 
     try {
       if (mode === "login") {
-        const result = await AuthApi.login({
+        await AuthApi.login({
           email: form.email,
           password: form.password,
         });
-        // Don't call AuthService.onLogin here since auth-api.js already does it
-        toast({
-          title: "Success",
-          description: "You are now logged in.",
-        });
+        toast({ title: "Success", description: "You are now logged in." });
         onClose();
       } else {
-        const result = await AuthApi.register({
+        await AuthApi.register({
           email: form.email,
           password: form.password,
-          full_name: form.full_name,
+          display_name: form.display_name,
         });
-        // Don't call AuthService.onLogin here since auth-api.js already does it
-        toast({
-          title: "Account created",
-          description: "You are now logged in.",
-        });
+        toast({ title: "Account created", description: "You are now logged in." });
         onClose();
       }
     } catch (err) {
@@ -79,77 +56,91 @@ export default function AuthModal({ open, onClose }) {
     }
   };
 
-  return (
-    <Dialog open={open} onClose={onClose}>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>
-            {mode === "login" ? "Login to Your Account" : "Create a New Account"}
-          </DialogTitle>
-        </DialogHeader>
+  if (!open) return null;
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === "register" && (
+  return (
+    <div className="fixed inset-0 flex items-center justify-center z-[1000] bg-gradient-to-br from-slate-100 to-white">
+      <Card className="w-full max-w-md bg-white shadow-2xl rounded-xl animate-fade-in">
+        <CardHeader className="border-b border-slate-100 pb-4">
+          <div className="flex items-center justify-between">
+            <CardTitle className="text-xl font-bold text-sky-700">
+              {mode === "login" ? "Login to Your Account" : "Create a New Account"}
+            </CardTitle>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={onClose}
+              className="h-8 w-8 p-0 text-slate-400 hover:text-slate-600 hover:bg-slate-100"
+            >
+              <X className="w-4 h-4" />
+            </Button>
+          </div>
+        </CardHeader>
+
+        <CardContent className="p-6">
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === "register" && (
+              <div>
+                <Label htmlFor="display_name">Full Name</Label>
+                <Input
+                  id="display_name"
+                  name="display_name"
+                  placeholder="John Doe"
+                  value={form.display_name}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            )}
             <div>
-              <Label htmlFor="full_name">Full Name</Label>
+              <Label htmlFor="email">Email</Label>
               <Input
-                id="full_name"
-                name="full_name"
-                placeholder="John Doe"
-                value={form.full_name}
+                id="email"
+                name="email"
+                type="email"
+                placeholder="you@example.com"
+                value={form.email}
                 onChange={handleChange}
                 required
               />
             </div>
-          )}
-          <div>
-            <Label htmlFor="email">Email</Label>
-            <Input
-              id="email"
-              name="email"
-              type="email"
-              placeholder="you@example.com"
-              value={form.email}
-              onChange={handleChange}
-              required
-            />
-          </div>
-          <div>
-            <Label htmlFor="password">Password</Label>
-            <Input
-              id="password"
-              name="password"
-              type="password"
-              placeholder="••••••••"
-              value={form.password}
-              onChange={handleChange}
-              required
-            />
-          </div>
+            <div>
+              <Label htmlFor="password">Password</Label>
+              <Input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="••••••••"
+                value={form.password}
+                onChange={handleChange}
+                required
+              />
+            </div>
 
-          <Button type="submit" disabled={loading} className="w-full">
-            {loading ? "Please wait..." : mode === "login" ? "Login" : "Register"}
-          </Button>
-        </form>
+            <Button type="submit" disabled={loading} className="w-full bg-sky-600 hover:bg-sky-700 text-white">
+              {loading ? "Please wait..." : mode === "login" ? "Login" : "Register"}
+            </Button>
+          </form>
 
-        <div className="mt-4 text-center text-sm text-muted-foreground">
-          {mode === "login" ? (
-            <>
-              Don't have an account?{" "}
-              <Button variant="link" onClick={() => setMode("register")}>
-                Register here
-              </Button>
-            </>
-          ) : (
-            <>
-              Already have an account?{" "}
-              <Button variant="link" onClick={() => setMode("login")}>
-                Login here
-              </Button>
-            </>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
+          <div className="mt-4 text-center text-sm text-slate-500">
+            {mode === "login" ? (
+              <>
+                Don’t have an account?{" "}
+                <Button variant="link" onClick={() => setMode("register")}>
+                  Register here
+                </Button>
+              </>
+            ) : (
+              <>
+                Already have an account?{" "}
+                <Button variant="link" onClick={() => setMode("login")}>
+                  Login here
+                </Button>
+              </>
+            )}
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

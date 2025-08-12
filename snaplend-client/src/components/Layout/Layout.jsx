@@ -1,18 +1,17 @@
-import React from "react";
+import { React, useState, useEffect } from "react";
 import { User} from "../../entities/User";
 import AuthService from "../../services/auth-service";
 
 export default function Layout({ children, currentPageName }) {
-  const [user, setUser] = React.useState(null);
-  const [isLoading, setIsLoading] = React.useState(true);
+  const [user, setUser] = useState(null);
+  const [isLoading, setIsLoading] = useState(true);
 
-  React.useEffect(() => {
+  useEffect(() => {
     checkAuth();
   }, []);
 
   const checkAuth = async () => {
     try {
-      // Only make API call if there's a user token in localStorage
       if (AuthService.isAuthenticated()) {
         const userData = await User.me();
         setUser(userData);

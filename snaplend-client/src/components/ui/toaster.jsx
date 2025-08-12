@@ -12,7 +12,7 @@ export function Toaster() {
   }, [toasts, removeToast]);
 
   return (
-    <div className="fixed top-4 right-4 z-50 space-y-2">
+    <div className="fixed bottom-4 left-1/2 transform -translate-x-1/2 z-[9999] space-y-2">
       {toasts.map((t) => (
         <div
           key={t.id}

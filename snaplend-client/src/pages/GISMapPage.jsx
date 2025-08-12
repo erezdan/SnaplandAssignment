@@ -18,6 +18,7 @@ import MapControls from "../components/gis/MapControls";
 import LayerSwitcher from "../components/gis/LayerSwitcher";
 import DrawingManager from "../components/gis/DrawingManager";
 import AuthService from "../services/auth-service"; // Import for authentication
+import AuthModal from "../components/gis/AuthModal";
 
 // Fix default markers
 delete L.Icon.Default.prototype._getIconUrl;
@@ -28,6 +29,7 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function GISMapPage() {
+  const [showAuthModal, setShowAuthModal] = useState(null);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [areas, setAreas] = useState([]);
@@ -61,14 +63,16 @@ export default function GISMapPage() {
       if (AuthService.isAuthenticated()) {
         const userData = await User.me();
         setUser(userData);
+        return userData;
       } else {
         setUser(null);
       }
     } catch (error) {
       console.log('GISMapPage checkAuth error:', error);
       setUser(null);
-    }
-    setIsLoading(false);
+    } finally {
+      setIsLoading(false);}
+    return null;
   };
 
   const loadAreas = async () => {
@@ -81,11 +85,12 @@ export default function GISMapPage() {
   };
 
   const handleLogin = async () => {
-    await User.login();
+    const userData = await checkAuth();
+    if (userData) setShowAuthModal(false);
   };
 
-  const handleLogout = async () => {
-    await User.logout();
+  const handleLogout = () => {
+    AuthService.onLogout();
     setUser(null);
   };
 
@@ -160,6 +165,12 @@ export default function GISMapPage() {
     );
   }
 
+  if (showAuthModal) {
+    return (
+      <AuthModal open={true} onClose={handleLogin} />
+    );
+  }
+
   return (
     <div className="relative h-screen w-full overflow-hidden bg-slate-50">
       {/* Top Header */}
@@ -180,50 +191,70 @@ export default function GISMapPage() {
           </div>
 
           <div className="flex items-center space-x-4">
-            {user && (
-              <>
+          {user ? (
+            <>
+              {/* Toggle areas panel - visible only on medium screens and up */}
+              <button
+                onClick={() => setShowAreasList(!showAreasList)}
+                className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                </svg>
+                <span className="text-sm font-medium">Areas</span>
+              </button>
+
+              {/* Show active users - visible only on medium screens and up */}
+              <button
+                onClick={() => setShowActiveUsers(!showActiveUsers)}
+                className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+              >
+                <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+                <span className="text-sm font-medium">
+                  {activeUsers.filter(u => u.isActive).length} Online
+                </span>
+              </button>
+
+              {/* User avatar, name, and logout */}
+              <div className="flex items-center space-x-3 pl-4 border-l border-slate-200">
+                <div className="flex items-center space-x-2">
+                  <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-sky-600 rounded-full flex items-center justify-center">
+                    <span className="text-sm font-semibold text-white">
+                      {user.full_name?.charAt(0)?.toUpperCase() || "U"}
+                    </span>
+                  </div>
+                  <div className="hidden sm:block">
+                    <p className="text-sm font-medium text-slate-900">{user.full_name}</p>
+                    <p className="text-xs text-slate-500">{user.email}</p>
+                  </div>
+                </div>
+
+                {/* Logout button */}
                 <button
-                  onClick={() => setShowAreasList(!showAreasList)}
-                  className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
+                  onClick={handleLogout}
+                  className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth={2}
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
+                    />
                   </svg>
-                  <span className="text-sm font-medium">Areas</span>
                 </button>
-                
-                <button
-                  onClick={() => setShowActiveUsers(!showActiveUsers)}
-                  className="hidden md:flex items-center space-x-2 px-3 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 transition-colors"
-                >
-                  <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                  <span className="text-sm font-medium">{activeUsers.filter(u => u.isActive).length} Online</span>
-                </button>
-
-                <div className="flex items-center space-x-3 pl-4 border-l border-slate-200">
-                  <div className="flex items-center space-x-2">
-                    <div className="w-8 h-8 bg-gradient-to-br from-sky-500 to-sky-600 rounded-full flex items-center justify-center">
-                      <span className="text-sm font-semibold text-white">
-                        {user.full_name?.charAt(0)?.toUpperCase() || "U"}
-                      </span>
-                    </div>
-                    <div className="hidden sm:block">
-                      <p className="text-sm font-medium text-slate-900">{user.full_name}</p>
-                      <p className="text-xs text-slate-500">{user.email}</p>
-                    </div>
-                  </div>
-                  <button
-                    onClick={handleLogout}
-                    className="p-2 text-slate-400 hover:text-slate-600 transition-colors"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-                    </svg>
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+              </div>
+            </>
+          ) : (
+            // Login button for unauthenticated users
+            <button
+              onClick={() => setShowAuthModal(true)}
+              className="px-4 py-2 rounded-lg bg-sky-600 text-white hover:bg-sky-700 transition-colors text-sm font-medium"
+            >
+              Login
+            </button>
+          )}
+        </div>
         </div>
       </header>
 
