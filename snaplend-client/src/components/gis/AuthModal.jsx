@@ -30,20 +30,20 @@ export default function AuthModal({ open, onClose }) {
 
     try {
       if (mode === "login") {
-        await AuthApi.login({
+        const userData = await AuthApi.login({
           email: form.email,
           password: form.password,
         });
         toast({ title: "Success", description: "You are now logged in." });
-        onClose();
+        onClose(userData);
       } else {
-        await AuthApi.register({
+        const userData = await AuthApi.register({
           email: form.email,
           password: form.password,
           display_name: form.display_name,
         });
         toast({ title: "Account created", description: "You are now logged in." });
-        onClose();
+        onClose(userData);
       }
     } catch (err) {
       toast({
@@ -57,7 +57,7 @@ export default function AuthModal({ open, onClose }) {
   };
 
   const handleClose = () =>{
-    onClose();
+    onClose(null);
   }
 
   if (!open) return null;

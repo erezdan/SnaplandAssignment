@@ -33,7 +33,7 @@ L.Icon.Default.mergeOptions({
 });
 
 export default function GISMapPage() {
-  const [showAuthModal, setShowAuthModal] = useState(null);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [areas, setAreas] = useState([]);
@@ -53,10 +53,22 @@ export default function GISMapPage() {
 
   useEffect(() => {
     const init = async () => {
-      await checkAuth();
-      const users = await getAllUsersStatus();
-      setActiveUsers(users);
-      await loadAreas();
+      const userData = await checkAuth();
+      if (userData) {
+        // Only call authenticated APIs if user is authenticated
+        try {
+          const users = await getAllUsersStatus();
+          setActiveUsers(users);
+          await loadAreas();
+        } catch (error) {
+          console.error('Error loading data:', error);
+          // Handle 401 gracefully without showing auth modal again
+        }
+      }
+      // If no user, show auth modal
+      if (!userData) {
+        setShowAuthModal(true);
+      }
     };
   
     init();
@@ -73,19 +85,24 @@ export default function GISMapPage() {
         setUser(null);
       }
     } catch (error) {
-      console.log('GISMapPage checkAuth error:', error);
       setUser(null);
     } finally {
       setIsLoading(false);}
     return null;
   };
 
-  const loadAreas = async () => {    
+  const loadAreas = async () => {
     try {
-      const minLat = 31;
-      const maxLat = 31;
-      const minLng = 31;
-      const maxLng = 31; // israel space
+      const map = mapRef.current;
+      if (!map) return;
+  
+      // Get bounds from Leaflet map
+      const bounds = map.getBounds();
+      const minLat = bounds.getSouth();
+      const maxLat = bounds.getNorth();
+      const minLng = bounds.getWest();
+      const maxLng = bounds.getEast();
+  
       const areasData = await getAreas(minLng, minLat, maxLng, maxLat);
       setAreas(areasData);
     } catch (error) {
@@ -93,14 +110,25 @@ export default function GISMapPage() {
     }
   };
 
-  const handleLogin = async () => {
-    const userData = await checkAuth();
-    setShowAuthModal(false);
-
+  const handleLogin = async (userData) => {
     if (userData) {
-      const users = await getAllUsersStatus();
-      setActiveUsers(users);
-      await loadAreas();
+      // User successfully logged in
+      setUser(userData);
+      setShowAuthModal(false);
+      
+      // Load data after successful login
+      try {
+        const users = await getAllUsersStatus();
+        setActiveUsers(users);
+        await loadAreas();
+      } catch (error) {
+        console.error('Error loading data after login:', error);
+        // Don't show auth modal again on 401, just log the error
+        // The user is already logged in, so we don't want to force them to log in again
+      }
+    } else {
+      // User closed the modal without logging in
+      setShowAuthModal(false);
     }
   };
 

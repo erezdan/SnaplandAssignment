@@ -107,15 +107,7 @@ namespace Snapland.Server.Api.Controllers
             try
             {
                 var gf = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
-                var envelope = gf.CreatePolygon(new[]
-                {
-                    new Coordinate(minLng, minLat),
-                    new Coordinate(minLng, maxLat),
-                    new Coordinate(maxLng, maxLat),
-                    new Coordinate(maxLng, minLat),
-                    new Coordinate(minLng, minLat) // close polygon
-                });
-
+                var envelope = gf.ToGeometry(new Envelope(minLng, maxLng, minLat, maxLat));
                 var userId = User.GetUserId();
 
                 var rawResults = await (
