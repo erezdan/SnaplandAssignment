@@ -41,7 +41,8 @@ export default function AreasList({ areas, selectedArea, onAreaSelect, onClose }
       </CardHeader>
       
       <CardContent className="p-0">
-        <ScrollArea className="h-full">
+      <ScrollArea style={{ maxHeight: 'calc(100vh - 220px)' }}>
+
           <div className="p-4 space-y-3">
             {areas.length === 0 ? (
               <div className="text-center py-8">

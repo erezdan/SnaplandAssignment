@@ -262,9 +262,9 @@ export default function GISMapPage() {
           className="w-full h-full"
           zoomControl={false}
         >
-            <MapRefConnector onMapReady={(mapInstance) => {
+            <MapRefConnector onMapReady={async (mapInstance) => {
               mapRef.current = mapInstance;
-              loadAreas();
+              await loadAreas();
             }} />
 
           {currentLayer === "osm" ? (
