@@ -10,6 +10,8 @@ import { Input } from "../components/ui/input";
 import { Badge } from "../components/ui/badge";
 import { Card, CardContent } from "../components/ui/card";
 import { Save, X } from "lucide-react";
+import { createArea } from "../api/area-api"; 
+import { useToast } from "../components/ui/use-toast";
 
 import DrawingTools from "../components/gis/DrawingTools";
 import AreasList from "../components/gis/AreasList";
@@ -45,6 +47,7 @@ export default function GISMapPage() {
   const [showActiveUsers, setShowActiveUsers] = useState(false);
   
   const mapRef = useRef();
+  const { toast } = useToast();
 
   useEffect(() => {
     checkAuth();
@@ -96,36 +99,27 @@ export default function GISMapPage() {
 
   const handleSaveArea = async () => {
     if (!finalPolygon || !areaName.trim()) return;
-
-    const bounds = L.polygon(finalPolygon).getBounds();
-    const areaData = {
-      name: areaName,
-      geometry: {
-        type: "Polygon",
-        coordinates: [finalPolygon.map(p => [p.lng, p.lat])]
-      },
-      area_km2: currentArea,
-      bounds: {
-        north: bounds.getNorth(),
-        south: bounds.getSouth(),
-        east: bounds.getEast(),
-        west: bounds.getWest()
-      }
-    };
-
+  
+    const coordinates = finalPolygon.map(p => [p.lng, p.lat]);
+  
     try {
-      await Area.create(areaData);
+      await createArea(areaName, coordinates);
       await loadAreas();
-    } catch (error) {
-      console.error("Error saving area:", error);
+    } catch (err) {
+      toast({
+        title: "Error",
+        description: `Error saving area: ${err.message}` || "Error saving area: ",
+        variant: "destructive",
+      });
     }
-
+  
     // Reset state
     setShowSaveDialog(false);
     setFinalPolygon(null);
     setAreaName("");
     setCurrentArea(0);
   };
+  
 
   const handleAreaSelect = (area) => {
     setSelectedArea(area);

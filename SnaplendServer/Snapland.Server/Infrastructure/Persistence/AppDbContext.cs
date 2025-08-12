@@ -46,9 +46,9 @@ namespace Snapland.Server.Infrastructure.Persistence
                     .IsRequired();
 
                 // Computed area in km² (stored in DB)
-                e.Property<double>("AreaKm2")
+                e.Property(x => x.AreaKm2)
                     .HasColumnName("area_km2")
-                    .HasComputedColumnSql("ST_Area(geometry::geography) / 1000000.0", stored: true);
+                    .HasColumnType("double precision");
 
                 // FK -> users (creator)
                 e.HasOne<User>()

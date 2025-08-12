@@ -8,6 +8,7 @@ using Snapland.Server.Infrastructure.Persistence;
 using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Microsoft.AspNetCore.Authorization;
 using Snapland.Server.Api.Extensions.Snapland.Server.Api.Extensions;
+using Snapland.Server.Api.Services;
 
 namespace Snapland.Server.Api.Controllers
 {
@@ -51,11 +52,15 @@ namespace Snapland.Server.Api.Controllers
 
             var polygon = validationResult.Polygon!;
 
+            // Calculate area in km²
+            var areaKm2 = AreaCalculator.CalculateKm2(polygon);
+
             var area = new Domain.Entities.Area
             {
                 Name = dto.Name,
                 Geometry = polygon,
-                CreatedByUserId = userId
+                CreatedByUserId = userId,
+                AreaKm2 = areaKm2
             };
 
             _db.Areas.Add(area);
@@ -71,11 +76,6 @@ namespace Snapland.Server.Api.Controllers
 
             _db.AreaVersions.Add(version);
             await _db.SaveChangesAsync();
-
-            var areaKm2 = await _db.Areas
-                .Where(x => x.Id == area.Id)
-                .Select(x => EF.Property<double>(x, "AreaKm2"))
-                .FirstAsync();
 
             return Ok(new AreaResultDto
             {
