@@ -51,6 +51,8 @@ export default function GISMapPage() {
 
   useEffect(() => {
     const init = async () => {
+      await handleLogout();
+
       const userData = await checkAuth();
       if (userData) {
         // Only call authenticated APIs if user is authenticated
@@ -65,8 +67,8 @@ export default function GISMapPage() {
       if (!userData) {
         setShowAuthModal(true);
       }
-    };
-  
+    }; 
+    
     init();
   }, []);
 

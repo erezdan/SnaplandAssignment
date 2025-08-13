@@ -43,8 +43,12 @@ export function sendMessage(type, payload) {
   }
 }
 
-export function disconnectWebSocket() {
+export function disconnectWebSocket() { 
   if (socket) {
+    if (socket.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({ type: "user:inactive" }));
+    }
+    
     socket.close();
     socket = null;
   }

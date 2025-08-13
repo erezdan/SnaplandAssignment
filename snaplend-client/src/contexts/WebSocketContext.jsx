@@ -17,6 +17,15 @@ export const WebSocketProvider = ({ children }) => {
   const [isLoggedIn, setIsLoggedIn] = useState(AuthService.isLoggedIn());
   const { toast } = useToast();
 
+  useEffect(() => {
+    const syncLoginState = () => {
+      setIsLoggedIn(AuthService.isLoggedIn());
+    };
+  
+    window.addEventListener("auth-change", syncLoginState);
+    return () => window.removeEventListener("auth-change", syncLoginState);
+  }, []);
+
   // Handler for incoming WebSocket messages
   const handleWebSocketMessage = (message) => {
     // Display toast for server error messages
@@ -44,16 +53,6 @@ export const WebSocketProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const syncLoginState = () => {
-      setIsLoggedIn(AuthService.isLoggedIn());
-    };
-  
-    window.addEventListener("auth-change", syncLoginState);
-    return () => window.removeEventListener("auth-change", syncLoginState);
-  }, []);
-
-  useEffect(() => {
-
     if (!isLoggedIn) {
       disconnectWebSocket();
       return;

@@ -50,9 +50,6 @@ namespace Snapland.Server.Realtime.Websockets
                 var manager = context.RequestServices.GetRequiredService<WebSocketManager>();
                 manager.AddConnection(connection);
 
-                // Set the user as active in the database
-                await SetUserActive(db, userId, true);
-
                 // Broadcast updated user status to all clients
                 await messageHandler.BroadcastAllUsersStatusAsync();
 
@@ -61,7 +58,7 @@ namespace Snapland.Server.Realtime.Websockets
 
                 // On disconnect, set user inactive and broadcast again
                 manager.RemoveConnection(connection.ConnectionId);
-                await SetUserActive(db, userId, false);
+
                 await messageHandler.BroadcastAllUsersStatusAsync();
             }
             else

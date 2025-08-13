@@ -8,11 +8,9 @@ const AuthService = {
    * @param {Object} user - The user object returned from the login API (including token, email, displayName).
    */
   onLogin(user) {
-    console.log('AuthService.onLogin called with:', user);
     if (user && typeof user === 'object') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
       localStorage.setItem('isLoggedIn', 'true'); // Store login status
-      console.log('User saved to localStorage:', JSON.stringify(user));
       window.dispatchEvent(new Event("auth-change")); // Notify listeners
     } else {
       console.error('Invalid user data passed to onLogin:', user);
@@ -25,6 +23,7 @@ const AuthService = {
   onLogout() {
     localStorage.removeItem(STORAGE_KEY);
     localStorage.setItem('isLoggedIn', 'false'); // Clear login status
+    window.dispatchEvent(new Event("auth-change")); // Notify listeners
   },
 
   /**

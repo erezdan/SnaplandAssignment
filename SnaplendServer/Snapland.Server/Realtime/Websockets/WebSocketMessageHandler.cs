@@ -34,7 +34,11 @@ namespace Snapland.Server.Realtime.Websockets
                         break;
 
                     case "user:active":
-                        await HandleUserActive(connection);
+                        await HandleUserActive(connection, true);
+                        break;
+
+                    case "user:inactive":
+                        await HandleUserActive(connection, false);
                         break;
 
                     default:
@@ -56,13 +60,13 @@ namespace Snapland.Server.Realtime.Websockets
             await _manager.BroadcastUsersAsync(messageType!, messageValue);
         }
 
-        private async Task HandleUserActive(WebSocketConnection sender)
+        private async Task HandleUserActive(WebSocketConnection sender, bool isActive)
         {
             // Set the user as active in DB
             var user = await _db.Users.FirstOrDefaultAsync(u => u.Id.ToString() == sender.UserId);
             if (user != null)
             {
-                user.IsActive = true;
+                user.IsActive = isActive;
                 await _db.SaveChangesAsync();
             }
 
