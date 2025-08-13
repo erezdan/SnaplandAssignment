@@ -1,4 +1,4 @@
-import React, { useContext } from "react";
+import React, { useContext, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { Button } from "../ui/button";
 import { Badge } from "../ui/badge";
@@ -7,15 +7,22 @@ import { X, Users, Circle, Clock, Palette } from "lucide-react";
 import { assignPastelColorsToUsers } from "../../utiles/randomColors";
 import { WebSocketContext } from "../../contexts/WebSocketContext";
 
-export default function ActiveUsers({ currentUser, onClose }) {
+export default function ActiveUsers({ currentUser, onClose, onSelectedUser }) {
   const { activeUsers } = useContext(WebSocketContext);
 
+  const [selectedUserId, setSelectedUserId] = useState(null);
+  
   // Convert object to array and assign colors
   const coloredUsers = assignPastelColorsToUsers(Object.values(activeUsers || {}));
 
   // Split into active and inactive users
   const activeColoredUsers = coloredUsers.filter(user => user.isActive);
   const inactiveUsers = coloredUsers.filter(user => !user.isActive);
+
+  const handleSelectUser = (user) => {
+    setSelectedUserId(user.id);
+    if (onSelectedUser) onSelectedUser(user);
+  };
 
   return (
     <Card className="absolute right-4 top-32 w-72 max-h-[80vh] z-[1000] bg-white/95 backdrop-blur-sm shadow-2xl border-0 animate-slide-in">
@@ -58,7 +65,12 @@ export default function ActiveUsers({ currentUser, onClose }) {
                 {activeColoredUsers.map((user) => (
                   <div
                     key={user.id}
-                    className="flex items-center justify-between p-3 rounded-lg bg-green-50 border border-green-200"
+                    onClick={()=> handleSelectUser(user)}
+                    className={`flex items-center justify-between p-2 rounded-lg cursor-pointer border
+                      ${user.id === selectedUserId
+                        ? "bg-blue-100 border-blue-300 ring-2 ring-blue-400"
+                        : "bg-slate-50 border-transparent"
+                      }`}
                   >
                     <div className="flex items-center space-x-3">
                       <div
@@ -114,7 +126,12 @@ export default function ActiveUsers({ currentUser, onClose }) {
                   {inactiveUsers.map((user) => (
                     <div
                       key={user.id}
-                      className="flex items-center justify-between p-2 rounded-lg bg-slate-50"
+                      onClick={()=> handleSelectUser(user)}
+                      className={`flex items-center justify-between p-2 rounded-lg cursor-pointer border
+                        ${user.id === selectedUserId
+                          ? "bg-blue-100 border-blue-300 ring-2 ring-blue-400"
+                          : "bg-slate-50 border-transparent"
+                        }`}
                     >
                       <div className="flex items-center space-x-3">
                         <div

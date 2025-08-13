@@ -45,6 +45,7 @@ export default function GISMapPage() {
   const [areaName, setAreaName] = useState("");
   const [showAreasList, setShowAreasList] = useState(false);
   const [showActiveUsers, setShowActiveUsers] = useState(false);
+  const [selectedUser, setSelectedUser] = useState(null);
   
   const mapRef = useRef(null);
   const { toast } = useToast();
@@ -195,6 +196,10 @@ export default function GISMapPage() {
     setAreaName("");
     setCurrentArea(0);
   };
+
+  const handleSelectUser = (user) => {
+    setSelectedUser(user);
+  }
 
   if (isLoading) {
     return (
@@ -366,6 +371,7 @@ export default function GISMapPage() {
           <ActiveUsers
             currentUser={user}
             onClose={() => setShowActiveUsers(false)}
+            onSelectedUser={handleSelectUser}
           />
         )}
       </div>
