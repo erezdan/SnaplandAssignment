@@ -16,7 +16,17 @@ export function connectWebSocket(onMessage, onOpen, onClose, onError) {
 
   socket = new WebSocket(wsUrl);
 
-  socket.onopen = onOpen || (() => console.log("WebSocket connected"));
+  socket.onopen = () => {
+    // Always send "user:active" after connecting
+    socket.send(JSON.stringify({ type: "user:active" }));
+
+    if (onOpen) {
+      onOpen();
+    } else {
+      console.log("WebSocket connected");
+    }
+  };
+
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
     if (onMessage) onMessage(data);

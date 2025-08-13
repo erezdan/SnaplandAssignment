@@ -7,7 +7,7 @@ export function Toaster() {
   useEffect(() => {
     // Set timeouts for each toast
     const timers = toasts.map((t) =>
-      setTimeout(() => removeToast(t.id), 3000)
+      setTimeout(() => removeToast(t.id), t.variant === "destructive" ? 2000 : 1000)
     );
     return () => timers.forEach(clearTimeout);
   }, [toasts, removeToast]);

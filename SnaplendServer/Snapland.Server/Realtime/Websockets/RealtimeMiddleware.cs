@@ -9,17 +9,14 @@ namespace Snapland.Server.Realtime.Websockets
     public class RealtimeMiddleware
     {
         private readonly RequestDelegate _next;
-        private readonly WebSocketManager _manager;
         private readonly JwtTokenHelper _tokenHelper;
 
         public RealtimeMiddleware(
             RequestDelegate next,
-            WebSocketManager manager,
             JwtTokenHelper tokenHelper
         )
         {
             _next = next;
-            _manager = manager;
             _tokenHelper = tokenHelper;
         }
 
@@ -50,7 +47,8 @@ namespace Snapland.Server.Realtime.Websockets
                 // Accept the WebSocket connection
                 var socket = await context.WebSockets.AcceptWebSocketAsync();
                 var connection = new WebSocketConnection(userId, socket);
-                _manager.AddConnection(connection);
+                var manager = context.RequestServices.GetRequiredService<WebSocketManager>();
+                manager.AddConnection(connection);
 
                 // Set the user as active in the database
                 await SetUserActive(db, userId, true);
@@ -62,7 +60,7 @@ namespace Snapland.Server.Realtime.Websockets
                 await HandleConnectionAsync(connection, messageHandler);
 
                 // On disconnect, set user inactive and broadcast again
-                _manager.RemoveConnection(connection.ConnectionId);
+                manager.RemoveConnection(connection.ConnectionId);
                 await SetUserActive(db, userId, false);
                 await messageHandler.BroadcastAllUsersStatusAsync();
             }

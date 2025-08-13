@@ -88,8 +88,9 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // --------------------------
 // Realtime WebSocket
 // --------------------------
-builder.Services.AddSingleton<WebSocketManager>();
-builder.Services.AddScoped<WebSocketMessageHandler>();
+builder.Services.AddScoped<UserCacheService>();
+builder.Services.AddTransient<WebSocketManager>();
+builder.Services.AddTransient<WebSocketMessageHandler>();
 
 // --------------------------
 // GIS: GeometryFactory with SRID 4326
@@ -129,6 +130,12 @@ builder.Services.AddCors(o =>
 // App Build & Middleware
 // --------------------------
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var userCache = scope.ServiceProvider.GetRequiredService<UserCacheService>();
+    await userCache.LoadInitialUsersAsync();
+}
 
 if (app.Environment.IsDevelopment())
 {

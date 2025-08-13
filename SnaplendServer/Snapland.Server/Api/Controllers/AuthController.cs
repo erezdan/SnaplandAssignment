@@ -15,11 +15,13 @@ namespace Snapland.Server.Api.Controllers
     {
         private readonly AppDbContext _db;
         private readonly ITokenService _tokenService;
+        private readonly UserCacheService _userCacheService;
 
-        public AuthController(AppDbContext db, ITokenService tokenService)
+        public AuthController(AppDbContext db, ITokenService tokenService, UserCacheService userCacheService)
         {
             _db = db;
             _tokenService = tokenService;
+            _userCacheService = userCacheService;
         }
 
         /// <summary>
@@ -53,6 +55,9 @@ namespace Snapland.Server.Api.Controllers
             await _db.SaveChangesAsync();
 
             var token = _tokenService.CreateToken(user.Id, user.Email);
+            
+            await _userCacheService.LoadInitialUsersAsync();
+
             return Ok(new AuthResponse { Token = token, Email = user.Email, DisplayName = user.DisplayName });
         }
 

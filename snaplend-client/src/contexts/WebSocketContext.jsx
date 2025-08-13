@@ -14,6 +14,7 @@ export const WebSocketContext = createContext();
 
 export const WebSocketProvider = ({ children }) => {
   const [activeUsers, setActiveUsers] = useState({}); // { [userId]: { ...user } }
+  const [isLoggedIn, setIsLoggedIn] = useState(AuthService.isLoggedIn());
   const { toast } = useToast();
 
   // Handler for incoming WebSocket messages
@@ -30,21 +31,12 @@ export const WebSocketProvider = ({ children }) => {
 
     // Standard handling for user presence
     switch (message.type) {
-      case "user_joined":
-      case "user_updated":
-        setActiveUsers((prev) => ({
-          ...prev,
-          [message.user.id]: { ...prev[message.user.id], ...message.user, isActive: true },
-        }));
-        break;
-      case "user_left":
-        setActiveUsers((prev) => {
-          const updated = { ...prev };
-          if (updated[message.userId]) {
-            updated[message.userId].isActive = false;
-          }
-          return updated;
-        });
+      case "users_status":
+        const updatedUsers = {};
+        for (const user of message.users) {
+          updatedUsers[user.id] = user;
+        }
+        setActiveUsers(updatedUsers);
         break;
       default:
         break;
@@ -52,8 +44,20 @@ export const WebSocketProvider = ({ children }) => {
   };
 
   useEffect(() => {
-    const token = AuthService.getToken();
-    if (!token) return;
+    const syncLoginState = () => {
+      setIsLoggedIn(AuthService.isLoggedIn());
+    };
+  
+    window.addEventListener("auth-change", syncLoginState);
+    return () => window.removeEventListener("auth-change", syncLoginState);
+  }, []);
+
+  useEffect(() => {
+
+    if (!isLoggedIn) {
+      disconnectWebSocket();
+      return;
+    }
 
     // Fetch all users initially
     const fetchUsers = async () => {
@@ -120,7 +124,7 @@ export const WebSocketProvider = ({ children }) => {
     return () => {
       disconnectWebSocket();
     };
-  }, [toast]);
+  }, [isLoggedIn]);
 
   return (
     <WebSocketContext.Provider value={{ activeUsers }}>

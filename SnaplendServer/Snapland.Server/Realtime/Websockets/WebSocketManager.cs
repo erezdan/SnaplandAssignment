@@ -1,6 +1,8 @@
 ﻿using Snapland.Server.Api.DTOs;
+using Snapland.Server.Api.Services;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
+using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
 
@@ -9,6 +11,12 @@ namespace Snapland.Server.Realtime.Websockets
     public class WebSocketManager
     {
         private readonly ConcurrentDictionary<string, WebSocketConnection> _connections = new();
+        private UserCacheService _userCache;
+
+        public WebSocketManager(UserCacheService userCache)
+        {
+            _userCache = userCache;
+        }
 
         public void AddConnection(WebSocketConnection connection)
         {
@@ -22,13 +30,27 @@ namespace Snapland.Server.Realtime.Websockets
 
         public IEnumerable<WebSocketConnection> GetAllConnections() => _connections.Values;
 
-        public async Task BroadcastAsync(string message, string excludeUserId = "")
+        public async Task BroadcastUsersAsync(string msgType, object msgValue, string? excludeUserId = null)
         {
-            var buffer = Encoding.UTF8.GetBytes(message);
+            var users = _userCache.GetActiveUsers(excludeUserId != null ? Guid.Parse(excludeUserId) : null);
+            if (users.Count == 0)
+                return;
 
-            foreach (var conn in _connections.Values)
+            if (msgType == "users_status") msgValue = users;
+
+            var msg = new
             {
-                if (conn.UserId != excludeUserId && conn.IsAlive)
+                type = msgType,
+                value = msgValue
+            };
+
+            var json = JsonSerializer.Serialize(msg);
+            var buffer = Encoding.UTF8.GetBytes(json);
+
+            await Parallel.ForEachAsync(users, async (user, _) =>
+            {
+                var conn = _connections.Values.FirstOrDefault(c => c.UserId == user.Id.ToString() && c.IsAlive);
+                if (conn != null)
                 {
                     await conn.Socket.SendAsync(
                         new ArraySegment<byte>(buffer),
@@ -36,18 +58,7 @@ namespace Snapland.Server.Realtime.Websockets
                         true,
                         CancellationToken.None);
                 }
-            }
-        }
-
-        public async Task BroadcastUsersStatusAsync(List<UserStatusDto> users)
-        {
-            var msg = new
-            {
-                type = "users_status",
-                users
-            };
-            var json = JsonSerializer.Serialize(msg);
-            await BroadcastAsync(json);
+            });
         }
     }
 }

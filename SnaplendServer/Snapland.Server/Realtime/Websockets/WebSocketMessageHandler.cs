@@ -50,8 +50,10 @@ namespace Snapland.Server.Realtime.Websockets
 
         private async Task HandleDrawingMessage(WebSocketConnection sender, JsonDocument doc)
         {
-            // After drawing: broadcast all users' status
-            await BroadcastAllUsersStatusAsync();
+            var messageType = doc.RootElement.GetProperty("type").GetString();
+            var messageValue = doc.RootElement;
+
+            await _manager.BroadcastUsersAsync(messageType!, messageValue);
         }
 
         private async Task HandleUserActive(WebSocketConnection sender)
@@ -70,18 +72,7 @@ namespace Snapland.Server.Realtime.Websockets
 
         public async Task BroadcastAllUsersStatusAsync()
         {
-            // Get all users and their statuses
-            var users = await _db.Users
-                .OrderBy(u => u.DisplayName)
-                .Select(u => new UserStatusDto
-                {
-                    Id = u.Id,
-                    DisplayName = u.DisplayName,
-                    IsActive = u.IsActive
-                })
-                .ToListAsync();
-
-            await _manager.BroadcastUsersStatusAsync(users);
+            await _manager.BroadcastUsersAsync("users_status", new object());
         }
     }
 }

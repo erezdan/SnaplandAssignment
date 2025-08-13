@@ -11,7 +11,9 @@ const AuthService = {
     console.log('AuthService.onLogin called with:', user);
     if (user && typeof user === 'object') {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(user));
+      localStorage.setItem('isLoggedIn', 'true'); // Store login status
       console.log('User saved to localStorage:', JSON.stringify(user));
+      window.dispatchEvent(new Event("auth-change")); // Notify listeners
     } else {
       console.error('Invalid user data passed to onLogin:', user);
     }
@@ -22,6 +24,7 @@ const AuthService = {
    */
   onLogout() {
     localStorage.removeItem(STORAGE_KEY);
+    localStorage.setItem('isLoggedIn', 'false'); // Clear login status
   },
 
   /**
@@ -60,6 +63,14 @@ const AuthService = {
   isAuthenticated() {
     const token = this.getToken();
     return !!token;
+  },
+
+  /**
+   * Check if the user is marked as logged in.
+   * @returns {boolean}
+   */
+  isLoggedIn() {
+    return localStorage.getItem('isLoggedIn') === 'true';
   },
 };
 
