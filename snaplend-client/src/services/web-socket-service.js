@@ -3,6 +3,7 @@
 import AuthService from "./auth-service";
 
 let socket = null;
+let messageListeners = [];
 
 export function connectWebSocket(onMessage, onOpen, onClose, onError) {
   const token = AuthService.getToken();
@@ -29,6 +30,7 @@ export function connectWebSocket(onMessage, onOpen, onClose, onError) {
 
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
+    messageListeners.forEach((cb) => cb(data));
     if (onMessage) onMessage(data);
   };
   socket.onclose = onClose || (() => console.log("WebSocket disconnected"));
@@ -52,6 +54,14 @@ export function disconnectWebSocket() {
     socket.close();
     socket = null;
   }
+}
+
+export function addMessageListener(cb) {
+  messageListeners.push(cb);
+}
+
+export function removeMessageListener(cb) {
+  messageListeners = messageListeners.filter((fn) => fn !== cb);
 }
 
 export function getWebSocketInstance() {

@@ -88,8 +88,8 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // --------------------------
 // Realtime WebSocket
 // --------------------------
-builder.Services.AddScoped<UserCacheService>();
-builder.Services.AddTransient<WebSocketManager>();
+builder.Services.AddSingleton<UserCacheService>();
+builder.Services.AddSingleton<WebSocketManager>();
 builder.Services.AddTransient<WebSocketMessageHandler>();
 
 // --------------------------
@@ -131,11 +131,13 @@ builder.Services.AddCors(o =>
 // --------------------------
 var app = builder.Build();
 
-using (var scope = app.Services.CreateScope())
+app.Lifetime.ApplicationStarted.Register(async () =>
 {
-    var userCache = scope.ServiceProvider.GetRequiredService<UserCacheService>();
-    await userCache.LoadInitialUsersAsync();
-}
+    using var scope = app.Services.CreateScope();
+    var db = scope.ServiceProvider.GetRequiredService<AppDbContext>();
+    var userCache = app.Services.GetRequiredService<UserCacheService>();
+    await userCache.LoadInitialUsersAsync(db);
+});
 
 if (app.Environment.IsDevelopment())
 {

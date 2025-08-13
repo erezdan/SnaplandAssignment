@@ -4,18 +4,16 @@ using Snapland.Server.Infrastructure.Persistence;
 
 public class UserCacheService
 {
-    private readonly AppDbContext _db;
     private readonly List<UserStatusDto> _cachedUsers = new();
     private readonly object _lock = new();
 
-    public UserCacheService(AppDbContext db)
+    public UserCacheService()
     {
-        _db = db;
     }
 
-    public async Task LoadInitialUsersAsync()
+    public async Task LoadInitialUsersAsync(AppDbContext db)
     {
-        var users = await _db.Users
+        var users = await db.Users
             .Select(u => new UserStatusDto
             {
                 Id = u.Id,

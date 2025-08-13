@@ -48,7 +48,7 @@ export default function DrawingManager({ isDrawing, onAreaUpdate, onPolygonCompl
         const newPoints = [...points, e.latlng];
         setPoints(newPoints);
         const area = calculateArea(newPoints);
-        onAreaUpdate(area);
+        onAreaUpdate(area, newPoints);
       }, 200);
 
       setClickTimeout(timeout);

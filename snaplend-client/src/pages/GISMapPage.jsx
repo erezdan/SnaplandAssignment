@@ -13,6 +13,8 @@ import { Save, X } from "lucide-react";
 import { createArea, getAreas } from "../api/area-api";
 import { useToast } from "../components/ui/use-toast";
 import MapRefConnector from "../utiles/MapRefConnector";
+import { getWebSocketInstance, addMessageListener, removeMessageListener } from "../services/web-socket-service";
+import { v4 as uuidv4 } from "uuid";
 
 import DrawingTools from "../components/gis/DrawingTools";
 import AreasList from "../components/gis/AreasList";
@@ -48,8 +50,11 @@ export default function GISMapPage() {
   const [selectedUser, setSelectedUser] = useState(null);
   
   const mapRef = useRef(null);
-  const { toast } = useToast();
+  const otherUserLayerGroupRef = useRef(null);
 
+  const { toast } = useToast();
+  const socket = getWebSocketInstance();
+    
   useEffect(() => {
     const init = async () => {
       await handleLogout();
@@ -57,7 +62,7 @@ export default function GISMapPage() {
       const userData = await checkAuth();
       if (userData) {
         // Only call authenticated APIs if user is authenticated
-        try {
+        try {          
           await loadAreas();
         } catch (error) {
           console.error('Error loading data:', error);
@@ -169,7 +174,6 @@ export default function GISMapPage() {
     setCurrentArea(0);
   };
   
-
   const handleAreaSelect = (area) => {
     setSelectedArea(area);
     if (mapRef.current && area.bounds) {
@@ -189,7 +193,7 @@ export default function GISMapPage() {
     setShowSaveDialog(true);
     setIsDrawing(false);
   };
-  
+
   const handleCancelSave = () => {
     setShowSaveDialog(false);
     setFinalPolygon(null);
@@ -197,9 +201,151 @@ export default function GISMapPage() {
     setCurrentArea(0);
   };
 
-  const handleSelectUser = (user) => {
-    setSelectedUser(user);
+  const handleSelectUser = (selectedUser) => {
+    setSelectedUser(selectedUser);
   }
+
+  function drawLines(payload) {
+    const { points, area, color = "#6A0DAD" } = payload;
+  
+    const elements = [];
+  
+    // Draw lines between consecutive points
+    for (let i = 0; i < points.length - 1; i++) {
+      elements.push({
+        type: "line",
+        from: points[i],
+        to: points[i + 1],
+        color,
+        strokeWidth: 2
+      });
+    }
+  
+    // Close the shape by connecting the last point to the first
+    if (points.length >= 3) {
+      elements.push({
+        type: "line",
+        from: points[points.length - 1],
+        to: points[0],
+        color,
+        strokeWidth: 2
+      });
+    }
+  
+    // Draw the elements on the canvas or layer
+    drawElements(elements);
+  } 
+
+  const drawElements = (elements) => {
+    if (!mapRef.current || !elements || elements.length === 0) return;
+    if (!otherUserLayerGroupRef.current) return;
+  
+    elements.forEach((element) => {
+      let layer = null;
+  
+      switch (element.type) {
+        case "line":
+          layer = L.polyline(
+            [
+              [element.from.lat, element.from.lng],
+              [element.to.lat, element.to.lng],
+            ],
+            {
+              color: element.color || "#0000FF",
+              weight: element.strokeWidth || 2,
+            }
+          );
+          break;
+  
+        case "polygon":
+          layer = L.polygon(
+            element.points.map((p) => [p.lat, p.lng]),
+            {
+              color: element.color || "#FF0000",
+              weight: element.strokeWidth || 2,
+              fillOpacity: 0.2,
+            }
+          );
+          break;
+  
+        case "freeDraw":
+          layer = L.polyline(
+            element.points.map((p) => [p.lat, p.lng]),
+            {
+              color: element.color || "#00AA00",
+              weight: element.strokeWidth || 2,
+            }
+          );
+          break;
+      }
+  
+      if (layer) {
+        layer.addTo(otherUserLayerGroupRef.current);
+      }
+    });
+  }; 
+
+  const clearOtherUserLayer = () => {
+    if (otherUserLayerGroupRef.current) {
+      otherUserLayerGroupRef.current.clearLayers();
+    }
+  };
+
+  // send the current drawing to the server
+  const handleAreaUpdate = (area, newPoints) => {
+    setCurrentArea(area);
+  
+    if (!newPoints) return;
+  
+    const drawingPayload = {
+      id: uuidv4(),
+      points: newPoints,
+      area: area,
+      userDisplayName: user.displayName,
+      color: user?.color || "#6A0DAD",
+    };
+  
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: "drawing:update",
+        payload: drawingPayload
+      }));
+    }
+  };
+
+  const sendClearUpdate = () => {
+    const drawingPayload = {
+      id: uuidv4(),
+      points: [],
+      userDisplayName: user.displayName,
+    };
+  
+    if (socket?.readyState === WebSocket.OPEN) {
+      socket.send(JSON.stringify({
+        type: "drawing:update",
+        payload: drawingPayload
+      }));
+    }
+  }
+
+  // getting the points from other user to draw
+  useEffect(() => {
+    const handleSocketMessage = (data) => { 
+      if (data.type === "drawing:update") {
+  
+        clearOtherUserLayer(); // Clear previous drawings
+
+        if (selectedUser && selectedUser.displayName === data.value.payload.userDisplayName && selectedUser.isActive) {
+          drawLines(data.value.payload);
+        }
+      }
+    };
+  
+    addMessageListener(handleSocketMessage);
+    return () => {
+      removeMessageListener(handleSocketMessage);
+    };
+  }, [selectedUser, user]); 
 
   if (isLoading) {
     return (
@@ -309,6 +455,11 @@ export default function GISMapPage() {
         >
             <MapRefConnector onMapReady={async (mapInstance) => {
               mapRef.current = mapInstance;
+
+              // Create a layer group for external drawings
+              if (!otherUserLayerGroupRef.current) {
+                otherUserLayerGroupRef.current = L.layerGroup().addTo(mapInstance);
+              }
             }} />
 
           {currentLayer === "osm" ? (
@@ -328,7 +479,7 @@ export default function GISMapPage() {
           {user && (
             <DrawingManager
               isDrawing={isDrawing}
-              onAreaUpdate={setCurrentArea}
+              onAreaUpdate={handleAreaUpdate}
               onPolygonComplete={handlePolygonComplete}
             />
           )}
@@ -352,6 +503,7 @@ export default function GISMapPage() {
             onCancelDrawing={() => {
                 setIsDrawing(false);
                 setCurrentArea(0);
+                sendClearUpdate();
             }}
           />
         )}

@@ -27,9 +27,7 @@ namespace Snapland.Server.Realtime.Websockets
                 var type = typeProp.GetString();
                 switch (type)
                 {
-                    case "draw:start":
-                    case "draw:move":
-                    case "draw:end":
+                    case "drawing:update":
                         await HandleDrawingMessage(connection, doc);
                         break;
 

@@ -56,7 +56,7 @@ namespace Snapland.Server.Api.Controllers
 
             var token = _tokenService.CreateToken(user.Id, user.Email);
             
-            await _userCacheService.LoadInitialUsersAsync();
+            await _userCacheService.LoadInitialUsersAsync(_db);
 
             return Ok(new AuthResponse { Token = token, Email = user.Email, DisplayName = user.DisplayName });
         }
@@ -80,6 +80,7 @@ namespace Snapland.Server.Api.Controllers
                 return Unauthorized("Invalid email or password");
 
             var token = _tokenService.CreateToken(user.Id, user.Email);
+
             return Ok(new AuthResponse { Token = token, Email = user.Email, DisplayName = user.DisplayName });
         }
 

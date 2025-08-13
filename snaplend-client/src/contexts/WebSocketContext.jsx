@@ -41,12 +41,18 @@ export const WebSocketProvider = ({ children }) => {
     // Standard handling for user presence
     switch (message.type) {
       case "users_status":
-        const updatedUsers = {};
-        for (const user of message.users) {
-          updatedUsers[user.id] = user;
+        try {
+          const updatedUsers = {};
+          for (const user of message.users) {
+            updatedUsers[user.id] = user;
+          }
+          setActiveUsers(updatedUsers);
         }
-        setActiveUsers(updatedUsers);
+        catch (err){
+          console.log("Error on getting users_status: ", err.message);
+        }
         break;
+        
       default:
         break;
     }
