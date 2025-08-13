@@ -5,6 +5,7 @@ export function Toaster() {
   const { toasts, removeToast } = useToastStore();
 
   useEffect(() => {
+    // Set timeouts for each toast
     const timers = toasts.map((t) =>
       setTimeout(() => removeToast(t.id), 3000)
     );

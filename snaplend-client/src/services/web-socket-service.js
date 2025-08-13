@@ -11,7 +11,8 @@ export function connectWebSocket(onMessage, onOpen, onClose, onError) {
     return;
   }
 
-  const wsUrl = `${process.env.REACT_APP_WS_BASE || "ws://localhost:5174"}/ws?token=${token}`;
+  const port = process.env.REACT_APP_WS_BASE;
+  const wsUrl = `${port}?token=${token}`;
 
   socket = new WebSocket(wsUrl);
 

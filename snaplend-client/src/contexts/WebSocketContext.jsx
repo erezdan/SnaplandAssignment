@@ -8,14 +8,28 @@ import {
   disconnectWebSocket,
 } from "../services/web-socket-service";
 import { getAllUsersStatus } from "../api/users-api";
+import { assignPastelColorsToUsers } from "../utiles/randomColors";
+import { useToast } from "../components/ui/use-toast";
 
 export const WebSocketContext = createContext();
 
 export const WebSocketProvider = ({ children }) => {
   const [activeUsers, setActiveUsers] = useState({}); // { [userId]: { ...user } }
+  const { toast } = useToast();
 
-  // Handle incoming WebSocket messages
+  // Handler for incoming WebSocket messages
   const handleWebSocketMessage = (message) => {
+    // Display toast for server error messages
+    if (message.type === "error") {
+      toast({
+        title: "Server Error",
+        description: message.error || "An unknown error occurred.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Standard handling for user presence
     switch (message.type) {
       case "user_joined":
       case "user_updated":
@@ -24,7 +38,6 @@ export const WebSocketProvider = ({ children }) => {
           [message.user.id]: { ...prev[message.user.id], ...message.user, isActive: true },
         }));
         break;
-
       case "user_left":
         setActiveUsers((prev) => {
           const updated = { ...prev };
@@ -34,19 +47,16 @@ export const WebSocketProvider = ({ children }) => {
           return updated;
         });
         break;
-
       default:
         break;
     }
   };
 
-  // Initial fetch + connect WebSocket
   useEffect(() => {
-    // Skip fetch if user is not authenticated
     const token = AuthService.getToken();
     if (!token) return;
 
-    // Fetch all users and store them in state
+    // Fetch all users initially
     const fetchUsers = async () => {
       try {
         const users = await getAllUsersStatus();
@@ -58,7 +68,6 @@ export const WebSocketProvider = ({ children }) => {
       } catch (error) {
         if (error.response?.status === 401) {
           console.warn("Unauthorized: User is not authenticated.");
-          // Optionally trigger login modal here
         } else {
           console.error("Failed to fetch users:", error);
         }
@@ -67,14 +76,52 @@ export const WebSocketProvider = ({ children }) => {
 
     fetchUsers();
 
-    // Connect to WebSocket for live updates
-    connectWebSocket(handleWebSocketMessage);
+    // Handlers for WebSocket lifecycle
+    let reconnectToastShown = false;
+
+    const handleOpen = () => {
+      if (reconnectToastShown) {
+        toast({
+          title: "WebSocket Reconnected",
+          description: "Reconnected to the real-time server.",
+          variant: "success",
+        });
+      } else {
+        toast({
+          title: "WebSocket Connected",
+          description: "Connected to the real-time server.",
+          variant: "success",
+        });
+        reconnectToastShown = true;
+      }
+      console.log("WebSocket connected");
+    };
+
+    const handleClose = () => {
+      toast({
+        title: "WebSocket Disconnected",
+        description: "Connection to the real-time server was closed.",
+        variant: "destructive",
+      });
+      reconnectToastShown = true; // next open is reconnect
+      console.log("WebSocket disconnected");
+    };
+
+    const handleError = (event) => {
+      toast({
+        title: "WebSocket Error",
+        description: "A connection error occurred.",
+        variant: "destructive",
+      });
+      console.error("WebSocket error", event);
+    };
+
+    connectWebSocket(handleWebSocketMessage, handleOpen, handleClose, handleError);
 
     return () => {
-      // Cleanup WebSocket connection
       disconnectWebSocket();
     };
-  }, []);
+  }, [toast]);
 
   return (
     <WebSocketContext.Provider value={{ activeUsers }}>
