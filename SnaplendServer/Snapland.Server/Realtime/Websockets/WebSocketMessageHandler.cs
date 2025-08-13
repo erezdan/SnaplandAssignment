@@ -1,14 +1,19 @@
 ﻿using System.Text.Json;
+using Microsoft.EntityFrameworkCore;
+using Snapland.Server.Api.DTOs;
+using Snapland.Server.Infrastructure.Persistence;
 
 namespace Snapland.Server.Realtime.Websockets
 {
     public class WebSocketMessageHandler
     {
         private readonly WebSocketManager _manager;
+        private readonly AppDbContext _db;
 
-        public WebSocketMessageHandler(WebSocketManager manager)
+        public WebSocketMessageHandler(WebSocketManager manager, AppDbContext db)
         {
             _manager = manager;
+            _db = db;
         }
 
         public async Task HandleMessageAsync(WebSocketConnection connection, string message)
@@ -45,19 +50,38 @@ namespace Snapland.Server.Realtime.Websockets
 
         private async Task HandleDrawingMessage(WebSocketConnection sender, JsonDocument doc)
         {
-            var raw = JsonSerializer.Serialize(doc.RootElement);
-            await _manager.BroadcastAsync(raw, excludeUserId: sender.UserId);
+            // After drawing: broadcast all users' status
+            await BroadcastAllUsersStatusAsync();
         }
 
         private async Task HandleUserActive(WebSocketConnection sender)
         {
-            var message = JsonSerializer.Serialize(new
+            // Set the user as active in DB
+            var user = await _db.Users.FirstOrDefaultAsync(u => u.Id.ToString() == sender.UserId);
+            if (user != null)
             {
-                type = "user:active",
-                userId = sender.UserId
-            });
+                user.IsActive = true;
+                await _db.SaveChangesAsync();
+            }
 
-            await _manager.BroadcastAsync(message, excludeUserId: sender.UserId);
+            // After setting active: broadcast all users' status
+            await BroadcastAllUsersStatusAsync();
+        }
+
+        public async Task BroadcastAllUsersStatusAsync()
+        {
+            // Get all users and their statuses
+            var users = await _db.Users
+                .OrderBy(u => u.DisplayName)
+                .Select(u => new UserStatusDto
+                {
+                    Id = u.Id,
+                    DisplayName = u.DisplayName,
+                    IsActive = u.IsActive
+                })
+                .ToListAsync();
+
+            await _manager.BroadcastUsersStatusAsync(users);
         }
     }
 }

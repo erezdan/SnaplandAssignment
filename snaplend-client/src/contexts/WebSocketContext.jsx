@@ -8,7 +8,6 @@ import {
   disconnectWebSocket,
 } from "../services/web-socket-service";
 import { getAllUsersStatus } from "../api/users-api";
-import { assignPastelColorsToUsers } from "../utiles/randomColors";
 import { useToast } from "../components/ui/use-toast";
 
 export const WebSocketContext = createContext();

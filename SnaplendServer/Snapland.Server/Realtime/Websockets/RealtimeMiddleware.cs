@@ -1,4 +1,6 @@
-﻿using Snapland.Server.Infrastructure.Authentication;
+﻿using Microsoft.EntityFrameworkCore;
+using Snapland.Server.Infrastructure.Authentication;
+using Snapland.Server.Infrastructure.Persistence;
 using System.Net.WebSockets;
 using System.Text;
 
@@ -8,19 +10,22 @@ namespace Snapland.Server.Realtime.Websockets
     {
         private readonly RequestDelegate _next;
         private readonly WebSocketManager _manager;
-        private readonly WebSocketMessageHandler _messageHandler;
         private readonly JwtTokenHelper _tokenHelper;
 
-        public RealtimeMiddleware(RequestDelegate next, WebSocketManager manager, JwtTokenHelper tokenHelper)
+        public RealtimeMiddleware(
+            RequestDelegate next,
+            WebSocketManager manager,
+            JwtTokenHelper tokenHelper
+        )
         {
             _next = next;
             _manager = manager;
-            _messageHandler = new WebSocketMessageHandler(manager);
             _tokenHelper = tokenHelper;
         }
 
         public async Task InvokeAsync(HttpContext context)
         {
+            // Only handle WebSocket requests on the /ws path
             if (context.Request.Path == "/ws")
             {
                 if (!context.WebSockets.IsWebSocketRequest)
@@ -31,19 +36,35 @@ namespace Snapland.Server.Realtime.Websockets
 
                 var token = context.Request.Query["token"].ToString();
                 var userId = ValidateTokenAndExtractUserId(token);
+
                 if (string.IsNullOrWhiteSpace(token) || userId == null)
                 {
                     context.Response.StatusCode = 401;
                     return;
                 }
 
+                // Resolve scoped services per-request
+                var db = context.RequestServices.GetRequiredService<AppDbContext>();
+                var messageHandler = context.RequestServices.GetRequiredService<WebSocketMessageHandler>();
+
+                // Accept the WebSocket connection
                 var socket = await context.WebSockets.AcceptWebSocketAsync();
                 var connection = new WebSocketConnection(userId, socket);
                 _manager.AddConnection(connection);
 
-                await HandleConnectionAsync(connection);
+                // Set the user as active in the database
+                await SetUserActive(db, userId, true);
 
+                // Broadcast updated user status to all clients
+                await messageHandler.BroadcastAllUsersStatusAsync();
+
+                // Start handling WebSocket messages
+                await HandleConnectionAsync(connection, messageHandler);
+
+                // On disconnect, set user inactive and broadcast again
                 _manager.RemoveConnection(connection.ConnectionId);
+                await SetUserActive(db, userId, false);
+                await messageHandler.BroadcastAllUsersStatusAsync();
             }
             else
             {
@@ -51,12 +72,14 @@ namespace Snapland.Server.Realtime.Websockets
             }
         }
 
+        // Validate the JWT and extract the user ID
         private string? ValidateTokenAndExtractUserId(string token)
-        {            
+        {
             return _tokenHelper.GetUserIdFromToken(token);
         }
 
-        private async Task HandleConnectionAsync(WebSocketConnection connection)
+        // Handle WebSocket messages for a connection
+        private async Task HandleConnectionAsync(WebSocketConnection connection, WebSocketMessageHandler handler)
         {
             var buffer = new byte[4096];
 
@@ -64,13 +87,14 @@ namespace Snapland.Server.Realtime.Websockets
             {
                 while (connection.IsAlive)
                 {
-                    var result = await connection.Socket.ReceiveAsync(new ArraySegment<byte>(buffer), CancellationToken.None);
+                    var result = await connection.Socket.ReceiveAsync(
+                        new ArraySegment<byte>(buffer), CancellationToken.None);
 
                     if (result.MessageType == WebSocketMessageType.Close)
                         break;
 
                     var msg = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    await _messageHandler.HandleMessageAsync(connection, msg);
+                    await handler.HandleMessageAsync(connection, msg);
                 }
             }
             catch (Exception ex)
@@ -79,7 +103,19 @@ namespace Snapland.Server.Realtime.Websockets
             }
             finally
             {
-                await connection.Socket.CloseAsync(WebSocketCloseStatus.NormalClosure, "Closed", CancellationToken.None);
+                await connection.Socket.CloseAsync(
+                    WebSocketCloseStatus.NormalClosure, "Closed", CancellationToken.None);
+            }
+        }
+
+        // Set user's IsActive flag in the database
+        private async Task SetUserActive(AppDbContext db, string userId, bool isActive)
+        {
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
+            if (user != null)
+            {
+                user.IsActive = isActive;
+                await db.SaveChangesAsync();
             }
         }
     }

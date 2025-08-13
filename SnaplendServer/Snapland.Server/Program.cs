@@ -89,6 +89,7 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 // Realtime WebSocket
 // --------------------------
 builder.Services.AddSingleton<WebSocketManager>();
+builder.Services.AddScoped<WebSocketMessageHandler>();
 
 // --------------------------
 // GIS: GeometryFactory with SRID 4326

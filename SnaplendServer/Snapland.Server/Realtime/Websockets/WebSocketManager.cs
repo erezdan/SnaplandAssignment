@@ -1,6 +1,8 @@
-﻿using System.Collections.Concurrent;
+﻿using Snapland.Server.Api.DTOs;
+using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Text;
+using System.Text.Json;
 
 namespace Snapland.Server.Realtime.Websockets
 {
@@ -36,6 +38,16 @@ namespace Snapland.Server.Realtime.Websockets
                 }
             }
         }
-    }
 
+        public async Task BroadcastUsersStatusAsync(List<UserStatusDto> users)
+        {
+            var msg = new
+            {
+                type = "users_status",
+                users
+            };
+            var json = JsonSerializer.Serialize(msg);
+            await BroadcastAsync(json);
+        }
+    }
 }
