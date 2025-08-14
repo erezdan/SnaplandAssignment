@@ -48,12 +48,12 @@ export default function AuthModal({ open, onClose }) {
     } catch (err) {
       toast({
         title: "Error",
-        description: err.message || "Something went wrong",
+        description: err.response?.data || err.message || "Something went wrong",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
-    }
+    }   
   };
 
   const handleClose = () =>{

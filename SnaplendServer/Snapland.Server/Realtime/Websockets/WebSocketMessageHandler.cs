@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Snapland.Server.Api.DTOs;
 using Snapland.Server.Infrastructure.Persistence;
+using Snapland.Server.Utils;
 
 namespace Snapland.Server.Realtime.Websockets
 {
@@ -55,6 +56,13 @@ namespace Snapland.Server.Realtime.Websockets
             var messageType = doc.RootElement.GetProperty("type").GetString();
             var messageValue = doc.RootElement;
 
+            // Audit Log
+            AuditLogger.LogUserAction(
+                Guid.Parse(sender.UserId),
+                "DrawMessage",
+                $"Type: {messageType}"
+            );
+
             await _manager.BroadcastUsersAsync(messageType!, messageValue);
         }
 
@@ -67,6 +75,12 @@ namespace Snapland.Server.Realtime.Websockets
                 user.IsActive = isActive;
                 await _db.SaveChangesAsync();
             }
+
+            // Audit Log
+            AuditLogger.LogUserAction(
+                user!.Id,
+                isActive ? "UserActive" : "UserInactive"
+            );
 
             // After setting active: broadcast all users' status
             await BroadcastAllUsersStatusAsync();

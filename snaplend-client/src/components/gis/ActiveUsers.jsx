@@ -16,7 +16,9 @@ export default function ActiveUsers({ currentUser, onClose, onSelectedUser }) {
   const coloredUsers = assignPastelColorsToUsers(Object.values(activeUsers || {}));
 
   // Split into active and inactive users
-  const activeColoredUsers = coloredUsers.filter(user => user.isActive);
+  const activeColoredUsers = coloredUsers.filter(user =>
+    user.isActive && user.displayName !== currentUser.displayName
+  );
   const inactiveUsers = coloredUsers.filter(user => !user.isActive);
 
   const handleSelectUser = (user) => {

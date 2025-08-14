@@ -9,6 +9,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL;
 using Microsoft.AspNetCore.Authorization;
 using Snapland.Server.Api.Extensions.Snapland.Server.Api.Extensions;
 using Snapland.Server.Api.Services;
+using Snapland.Server.Utils;
 
 namespace Snapland.Server.Api.Controllers
 {
@@ -39,6 +40,8 @@ namespace Snapland.Server.Api.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateArea([FromBody] AreaCreateDto dto)
         {
+            AuditLogger.LogHttpAction(HttpContext, dto);
+
             if (string.IsNullOrWhiteSpace(dto.Name))
                 return BadRequest("Area name is required.");
 
@@ -106,6 +109,8 @@ namespace Snapland.Server.Api.Controllers
         {
             try
             {
+                AuditLogger.LogHttpAction(HttpContext);
+
                 var gf = NetTopologySuite.NtsGeometryServices.Instance.CreateGeometryFactory(srid: 4326);
                 var envelope = gf.ToGeometry(new Envelope(minLng, maxLng, minLat, maxLat));
                 var userId = User.GetUserId();
@@ -158,8 +163,9 @@ namespace Snapland.Server.Api.Controllers
         /// </returns>
         [HttpGet("{id:long}")]
         public async Task<ActionResult<AreaDto>> GetById(Guid id)
-
         {
+            AuditLogger.LogHttpAction(HttpContext, id);
+
             var userId = User.GetUserId();
             var area = await _db.Areas.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id && x.CreatedByUserId == userId);
             if (area is null) return NotFound();
@@ -179,8 +185,9 @@ namespace Snapland.Server.Api.Controllers
         /// </returns>
         [HttpDelete("{id:guid}")]
         public async Task<IActionResult> SoftDelete(Guid id)
-
         {
+            AuditLogger.LogHttpAction(HttpContext, id);
+
             var userId = User.GetUserId();
             var area = await _db.Areas.FirstOrDefaultAsync(x => x.Id == id);
             if (area is null) return NotFound();

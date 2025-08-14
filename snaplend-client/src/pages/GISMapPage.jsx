@@ -203,6 +203,7 @@ export default function GISMapPage() {
 
   const handleSelectUser = (selectedUser) => {
     setSelectedUser(selectedUser);
+    clearOtherUserLayer(); // Clear previous drawings
   }
 
   function drawLines(payload) {

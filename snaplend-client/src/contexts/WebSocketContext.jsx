@@ -95,22 +95,12 @@ export const WebSocketProvider = ({ children }) => {
           variant: "success",
         });
       } else {
-        toast({
-          title: "WebSocket Connected",
-          description: "Connected to the real-time server.",
-          variant: "success",
-        });
         reconnectToastShown = true;
       }
       console.log("WebSocket connected");
     };
 
     const handleClose = () => {
-      toast({
-        title: "WebSocket Disconnected",
-        description: "Connection to the real-time server was closed.",
-        variant: "destructive",
-      });
       reconnectToastShown = true; // next open is reconnect
       console.log("WebSocket disconnected");
     };

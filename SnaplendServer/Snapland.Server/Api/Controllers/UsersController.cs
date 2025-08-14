@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Snapland.Server.Api.DTOs;
 using Snapland.Server.Infrastructure.Persistence;
+using Snapland.Server.Utils;
 
 namespace Snapland.Server.Api.Controllers
 {
@@ -28,6 +29,8 @@ namespace Snapland.Server.Api.Controllers
         [HttpGet("status")]
         public async Task<IActionResult> GetAllUsersStatus()
         {
+            AuditLogger.LogHttpAction(HttpContext);
+
             var users = await _db.Users
                 .OrderBy(u => u.DisplayName)
                 .Select(u => new UserStatusDto

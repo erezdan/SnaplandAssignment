@@ -7,6 +7,7 @@ using Snapland.Server.Api.Extensions.Snapland.Server.Api.Extensions;
 using Snapland.Server.Domain.Entities;
 using Snapland.Server.Infrastructure.Persistence;
 using Snapland.Server.Api.Services;
+using Snapland.Server.Utils;
 
 namespace Snapland.Server.Api.Controllers
 {
@@ -33,6 +34,8 @@ namespace Snapland.Server.Api.Controllers
         [HttpPost("{areaId:guid}/versions")]
         public async Task<IActionResult> CreateVersion([FromRoute] Guid areaId, [FromBody] AreaVersionCreateDto dto)
         {
+            AuditLogger.LogHttpAction(HttpContext, dto);
+
             var userId = User.GetUserId();
 
             var area = await _db.Areas
@@ -95,6 +98,8 @@ namespace Snapland.Server.Api.Controllers
         [HttpGet("{areaId}/versions")]
         public async Task<IActionResult> GetVersions([FromRoute] Guid areaId)
         {
+            AuditLogger.LogHttpAction(HttpContext, areaId);
+
             var userId = User.GetUserId();
 
             // Ensure the area exists and belongs to the authenticated user

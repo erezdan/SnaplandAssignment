@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore;
 using Snapland.Server.Infrastructure.Persistence;
 using Npgsql;
+using Snapland.Server.Utils;
 
 namespace Snapland.Server.Api.Controllers
 {
@@ -28,6 +29,8 @@ namespace Snapland.Server.Api.Controllers
         [HttpGet]
         public async Task<IActionResult> GetHealth()
         {
+            AuditLogger.LogHttpAction(HttpContext);
+
             var checks = new Dictionary<string, object>();
             var status = "Healthy";
 

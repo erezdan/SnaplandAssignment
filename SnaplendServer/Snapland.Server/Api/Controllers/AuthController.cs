@@ -1,9 +1,11 @@
 ﻿using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using NetTopologySuite.Algorithm;
 using Snapland.Server.Api.Models.Auth;
 using Snapland.Server.Api.Services;
 using Snapland.Server.Domain.Entities;
 using Snapland.Server.Infrastructure.Persistence;
+using Snapland.Server.Utils;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -39,6 +41,8 @@ namespace Snapland.Server.Api.Controllers
         [HttpPost("register")]
         public async Task<ActionResult<AuthResponse>> Register(RegisterRequest req)
         {
+            AuditLogger.LogHttpAction(HttpContext, req);
+
             if (await _db.Users.AnyAsync(x => x.Email == req.Email))
                 return BadRequest("Email already exists");
 
@@ -75,6 +79,8 @@ namespace Snapland.Server.Api.Controllers
         [HttpPost("login")]
         public async Task<ActionResult<AuthResponse>> Login(LoginRequest req)
         {
+            AuditLogger.LogHttpAction(HttpContext, req);
+
             var user = await _db.Users.FirstOrDefaultAsync(x => x.Email == req.Email);
             if (user is null || user.PasswordHash != Hash(req.Password))
                 return Unauthorized("Invalid email or password");
