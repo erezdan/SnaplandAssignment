@@ -1,5 +1,5 @@
 import * as React from "react";
-import { cn } from "../../lib/utils"; // helper to merge class names
+import { cn } from "../../utiles/utiles"; // helper to merge class names
 
 const Label = React.forwardRef(({ className, ...props }, ref) => (
   <label

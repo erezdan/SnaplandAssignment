@@ -4,7 +4,6 @@ import React, { createContext, useEffect, useState } from "react";
 import AuthService from "../services/auth-service";
 import {
   connectWebSocket,
-  sendMessage,
   disconnectWebSocket,
 } from "../services/web-socket-service";
 import { getAllUsersStatus } from "../api/users-api";

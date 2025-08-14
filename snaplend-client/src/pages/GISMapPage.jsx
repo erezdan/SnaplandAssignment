@@ -2,7 +2,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import { MapContainer, TileLayer } from "react-leaflet";
 import { User } from "../entities/User";
-import { Area } from "../entities/Area";
 import "leaflet/dist/leaflet.css";
 import L from "leaflet";
 import { Button } from "../components/ui/button";
@@ -399,7 +398,7 @@ export default function GISMapPage() {
               >
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
                 <span className="text-sm font-medium">
-                  {/*activeUsers.filter(u => u.isActive).length*/ 0} Online
+                  {/*activeUsers.filter(u => u.isActive).length*/} Users
                 </span>
               </button>
 

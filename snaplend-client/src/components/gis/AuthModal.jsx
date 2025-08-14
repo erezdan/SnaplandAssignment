@@ -5,7 +5,6 @@ import { Button } from "../ui/button";
 import { Label } from "../ui/label";
 import AuthApi from "../../api/auth-api";
 import { useToast } from "../ui/use-toast";
-import AuthService from "../../services/auth-service";
 import { X } from "lucide-react";
 
 export default function AuthModal({ open, onClose }) {
