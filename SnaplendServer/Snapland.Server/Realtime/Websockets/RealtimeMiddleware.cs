@@ -102,16 +102,5 @@ namespace Snapland.Server.Realtime.Websockets
                     WebSocketCloseStatus.NormalClosure, "Closed", CancellationToken.None);
             }
         }
-
-        // Set user's IsActive flag in the database
-        private async Task SetUserActive(AppDbContext db, string userId, bool isActive)
-        {
-            var user = await db.Users.FirstOrDefaultAsync(u => u.Id.ToString() == userId);
-            if (user != null)
-            {
-                user.IsActive = isActive;
-                await db.SaveChangesAsync();
-            }
-        }
     }
 }
